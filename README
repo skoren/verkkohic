@@ -6,10 +6,12 @@ pstools - pre-compiled binary from Shilpa, github repo is here: https://github.c
 
 cluster.py - very simple python script (using networkx 2.6) to separate graph into connected components and bipartition
    needs the gfa, list of homologous node pairs, and the hic mappings by read as input
-    outputs partitions  of nodes, see convert.sh for parsing
+   outputs partitions  of nodes, see convert.sh for parsing
 
 To run the pipeline, assuming mappings exist run cluster.sh which will find self-similar nodes w/mashmap, cluster via cluster.py, convert to rukki, and run rukki
 
 The unitig files have homopolymer-compressed and uncompressed versions of the graph.  
 The hic mapping files are from pstools, by read provides read ID and nodes it connects (if any), this is currently used as the input for cluster.py. The bycontig file gives a count of reads connecting nodes, where the nodes are re-named by the index at the start of the file.   
 The trio.colors.csv file provides truth for the graph coloring
+
+evaluate_binning.py helps to evaluate hi-c binning using trio binning as ground truth
