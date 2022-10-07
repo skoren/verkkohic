@@ -6,7 +6,7 @@ pstools - pre-compiled binary from Shilpa, github repo is here: https://github.c
 
 cluster.py - very simple python script (using networkx 2.6) to separate graph into connected components and bipartition
    needs the gfa, list of homologous node pairs, and the hic mappings by read as input
-   outputs partitions  of nodes, see convert.sh for parsing
+    outputs partitions  of nodes, see convert.sh for parsing
 
 To run the pipeline, assuming mappings exist run cluster.sh which will find self-similar nodes w/mashmap, cluster via cluster.py, convert to rukki, and run rukki
 
