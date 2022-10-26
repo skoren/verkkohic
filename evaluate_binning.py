@@ -47,5 +47,7 @@ for line in open (comp_file, 'r'):
                         p_len +=l
         total_l = m_len + p_len + u_len
         if total_l > 1000000:
-            print (f'{total_l}    {m_len/total_l:.3f}/{p_len/total_l:.3f}/{u_len/total_l:.3f}\n')
+            print (f'{total_l}    {m_len/total_l:.3f}/{p_len/total_l:.3f}/{u_len/total_l:.3f}')
+            if m_len > 0 and p_len > 0:
+                print ('BAD')
 #    exit()
