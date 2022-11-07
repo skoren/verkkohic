@@ -5,8 +5,29 @@ import os
 import random
 from os import listdir
 from os.path import isfile, join
+
+def evaluate_set(contig_set, lengths, colors):
+    m_len = 0
+    p_len = 0
+    u_len = 0
+    for contig in contig_set:
+        if contig in lengths:
+            l = lengths[contig]
+            if not (contig in colors):
+                u_len += l
+            else:
+                if colors[contig] == 'm':
+                    m_len += l
+                elif colors[contig] == 'p':
+                    p_len += l
+    total_l = m_len + p_len + u_len
+    if total_l > 1000000:
+        print(f'{total_l}    {m_len / total_l:.3f}/{p_len / total_l:.3f}/{u_len / total_l:.3f}')
+        if m_len > 0 and p_len > 0:
+            print('BAD')
+
 if len(sys.argv) < 4:
-    print(f'Usage: {sys.argv[0]} hi-c run results graph.gfa trio coloring <mashmap based chromosome assignment>')
+    print(f'Usage: {sys.argv[0]} <hi-c phasing results> <graph.gfa> <trio coloring> [mashmap based chromosome assignment]')
     exit()
 #hi-c gfa(noseq) trio_colors
 comp_file = sys.argv[1]
@@ -49,27 +70,18 @@ for line in open (comp_file, 'r'):
     for lines in line.split('}, {'):
         arr = lines.split('\'')
         cont_set = set(arr)
+        nonempty = 0
+        for chr in chrs:
+            chr_comp = chrs[chr].intersection(cont_set)
+            if len (chr_comp) > 0:
+                nonempty+=1
         for chr in chrs:
             chr_comp = chrs[chr].intersection(cont_set)
             if len (chr_comp) > 0:
                 print (f'Non empty component on chr {chr}')
-                print (chr_comp)
-                m_len = 0
-                p_len = 0
-                u_len = 0
-                for contig in chr_comp:
-                    if contig in lengths:
-                        l = lengths[contig]
-                        if not (contig in colors):
-                            u_len += l
-                        else:
-                            if colors[contig] == 'm':
-                                m_len +=l
-                            elif colors[contig] == 'p':
-                                p_len +=l
-                total_l = m_len + p_len + u_len
-                if total_l > 1000000:
-                    print (f'{total_l}    {m_len/total_l:.3f}/{p_len/total_l:.3f}/{u_len/total_l:.3f}')
-                    if m_len > 0 and p_len > 0:
-                        print ('BAD')
+                if nonempty == 1:
+                    evaluate_set(cont_set, lengths, colors)
+                else:
+                    print (chr_comp)
+                    evaluate_set(chr_comp, lengths, colors)
 #    exit()

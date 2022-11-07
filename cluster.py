@@ -4,11 +4,20 @@ import networkx as nx
 import math
 from networkx.algorithms import community
 
+def check_non_empty(part, G):
+    for p in part:
+        if p in G.nodes:
+            return True
+    return False
+
+
 MIN_LEN = 200000  # best result so far with 200000
 FIXED_WEIGHT = 100000  # best result so far with 100000
+#currently replaced with max pairwise weight among datasets
 MAX_GRAPH_DIST = 10000000  # hi-c links over 10M are believed to be useless
-MAX_COV = 100  # temporary coverage cutoff, should be rewritten
-KLIN_STARTS = 100  # number of different starts of kernighan lin
+MAX_COV = 100  # temporary coverage cutoff, currently replaced by median coverage from gfa
+
+KLIN_STARTS = 1000  # number of different starts of kernighan lin
 KLIN_ITER = 10000  # number of iterations inside kernighan lin
 print(nx.__version__)
 print(nx.__file__)
@@ -102,10 +111,16 @@ for line in translate:
         w = w['weight'] + add_w
         hicGraph[line[1]][line[2]]['weight'] = w
 compressed_file = open("hic.byread.compressed", 'w')
+max_w = 0
 for node1, node2 in hicGraph.edges():
+    if max_w < hicGraph[node1][node2]["weight"]:
+        max_w = hicGraph[node1][node2]["weight"]
     compressed_file.write(f'X {node1} {node2} {hicGraph[node1][node2]["weight"]}\n')
-sys.stderr.write(
-    "Loaded hic info with %d nodes and %d edges\n" % (hicGraph.number_of_nodes(), hicGraph.number_of_edges()))
+FIXED_WEIGHT = max_w
+sys.stderr.write(f'Constant for neighbouring edges set to be  {FIXED_WEIGHT}, for homologous edges {-10 * FIXED_WEIGHT} \n')
+
+
+sys.stderr.write("Loaded hic info with %d nodes and %d edges\n" % (hicGraph.number_of_nodes(), hicGraph.number_of_edges()))
 # for node1, node2 in hicGraph.edges():
 #    sys.stderr.write("Edge from %s to %s of weight %s\n"%(node1, node2, hicGraph.get_edge_data(node1, node2)))
 translate.close()
@@ -118,18 +133,21 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
     C = nx.Graph()
     # rebuild the graph from this component using only edges in the hic graph
     C.add_nodes_from(c)
+#    if "utig4-1014" not in C.nodes():
+#        continue
     Subgraph = G.subgraph(c).copy()
     dists = dict(nx.all_pairs_dijkstra_path_length(Subgraph, weight=lambda u, v, d: Subgraph.nodes[v]['length']))
     sys.stderr.write("Distances counted\n")
 
     # first we ignore any nodes that are too short
     short = []
+    tips = set()
     for n in C.nodes():
         if n not in G:
             sys.stderr.write("Error got a node not in original graph %s !" % (n))
             sys.exit()
         if G.nodes[n]['length'] < MIN_LEN:
-            sys.stderr.write("While partitoning dropping node %s its too short\n" % (n))
+#            sys.stderr.write("While partitoning dropping node %s its too short\n" % (n))
             short.append(n)
         elif G.nodes[n]['coverage'] > MAX_COV:
             sys.stderr.write("While partitoning dropping node %s coverage too high\n" % (n))
@@ -139,6 +157,8 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
     # Adding some auxilary vertices to allow slightly unbalanced partitions
     # sqrt/2 is quite arbitrary and subject to change
     aux_nodes = int(math.sqrt(C.number_of_nodes() // 2))
+    if C.number_of_nodes() <= 3:
+        aux_nodes = 0
     for i in range(0, aux_nodes):
         C.add_node("Aux" + str(i))
     for e in hicGraph.edges(c):
@@ -147,47 +167,70 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
             # if edges are to distant in graph, hi-c info is trash
             if dists[e[0]][e[1]] < MAX_GRAPH_DIST + G.nodes[e[1]]['length']:
                 C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
-            # print("Adding edge between %s and %s of weight %s"%(e[0], e[1], hicGraph[e[0]][e[1]]['weight']))
+            #Tips are special case - gaps in coverage may break connections
+            elif len (G.__getitem__(e[0])) == 1 or len (G.__getitem__(e[1])) == 1:
+                C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
+#                sys.stderr.write("Special case for tips, adding edge between %s and %s of weight %s\n"%(e[0], e[1], hicGraph[e[0]][e[1]]['weight']))
 
     # neighboring edges are encouraged to belong to the same component
     for e in G.edges(c):
         if e[0] in C and e[1] in C and matchGraph.get_edge_data(e[0], e[1]) == None:
-            C.add_edge(e[0], e[1], weight=FIXED_WEIGHT)
+            w = hicGraph.get_edge_data(e[0], e[1], 0)
+            add_w = 0
+            if w != 0:
+                add_w = w['weight']
+            C.add_edge(e[0], e[1], weight=FIXED_WEIGHT + add_w)
+#            aux_nodes = aux_nodes
     if C.number_of_nodes() > 1:
         for n in C.nodes():
             if n in matchGraph:
                 for ec in matchGraph.edges(n):
                     # while we build the initial partition give a big bonus edge for putting the homologous nodes into different partitions
-                    if ec[0] in C and ec[1] in C:
+                    if ec[0] in C and ec[1] in C and ec[0] < ec[1]:
                         C.add_edge(ec[0], ec[1], weight=-10 * FIXED_WEIGHT)
+                        C.add_edge(ec[1], ec[0], weight=-10 * FIXED_WEIGHT)
+        for edge in C.edges:
+            print(f'EEEDGE {edge} {C.edges[edge]}')
         best_score = FIXED_WEIGHT * C.number_of_nodes() * C.number_of_nodes()
+        
         for seed in range(0, KLIN_STARTS):  # iterate on starting partition
             random.seed(seed)
             p1 = []
             p2 = []
-            # make an initail guess at partitioning by putting homologous nodes into opposite clusters
-            for n in C.nodes():
-                if n in matchGraph:
-                    for ec in matchGraph.edges(n):
-                        if ec[0] == n and ec[1] in p1:
-                            if n not in p1:
-                                p2.append(n)
-                        elif ec[0] == n and ec[1] in p2:
-                            if n not in p2:
-                                p1.append(n)
-                        elif ec[1] == n and ec[0] in p1:
-                            if n not in p1:
-                                p2.append(n)
-                        elif ec[1] == n and ec[0] in p2:
-                            if n not in p2:
-                                p1.append(n)
-                        elif n not in p1 and n not in p2:
-                            p1.append(n)
-                else:
-                    if random.random() <= 0.5:
+            if False: #"utig4-1014" in C.nodes():
+                shastas_set = {'utig4-1448', 'utig4-2694', 'utig4-1015', 'utig4-1111', 'utig4-631', 'utig4-341', 'utig4-1444', 'utig4-1449', 'utig4-872', 'utig4-1558', 'utig4-1607', 'utig4-342', 'utig4-1850', 'utig4-1113', 'utig4-1531', 'utig4-1076', 'utig4-1684', 'utig4-371', 'utig4-874', 'utig4-1062'}
+                for n in C.nodes():
+                    if n in shastas_set:
                         p1.append(n)
                     else:
                         p2.append(n)
+            # make an initail guess at partitioning by putting homologous nodes into opposite clusters
+            else:
+                for n in C.nodes():
+                    if n in matchGraph:
+                        for ec in matchGraph.edges(n):
+                            if ec[0] == n and ec[1] in p1:
+                                if n not in p1:
+                                    p2.append(n)
+                            elif ec[0] == n and ec[1] in p2:
+                                if n not in p2:
+                                    p1.append(n)
+                            elif ec[1] == n and ec[0] in p1:
+                                if n not in p1:
+                                    p2.append(n)
+                            elif ec[1] == n and ec[0] in p2:
+                                if n not in p2:
+                                    p1.append(n)
+                            elif n not in p1 and n not in p2:
+                                if random.random() <= 0.5:
+                                    p1.append(n)
+                                else:
+                                    p2.append(n)
+                    else:
+                        if random.random() <= 0.5:
+                            p1.append(n)
+                        else:
+                            p2.append(n)
 #            print("Initial partitions are %s and %s" % (set(p1), set(p2)))
             if len(p1) * len(p2) > 0:
                 part = community.kernighan_lin.kernighan_lin_bisection(C, partition=[set(p1), set(p2)], max_iter=KLIN_ITER,
@@ -200,9 +243,12 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
                             sum += C.edges[i, j]['weight']
 
                 if (sum < best_score):
-                    print(f'Seed {seed} score {sum} improved over {best_score}')
-                    best_part = part
-                    best_score = sum
+#lets forbid Aux only components
+                    if check_non_empty(part[0], G) and check_non_empty(part[1], G):
+                        print(f'Seed {seed} score {sum} improved over {best_score}')
+                        best_part = part
+                        best_score = sum
             # for ()
             # cut_value, part = nx.stoer_wagner(C)
         print(best_part)
+        print (best_score)
