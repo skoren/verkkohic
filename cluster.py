@@ -23,6 +23,21 @@ print(nx.__version__)
 print(nx.__file__)
 G = nx.Graph()
 
+def revnode(n):
+    assert len(n) >= 2
+    assert n[0] == "<" or n[0] == ">"
+    return (">" if n[0] == "<" else "<") + n[1:]
+
+def IsTip(node, edges):
+    for pref in ['>', '<']:
+        ornode = pref + node
+        if len(edges[ornode]) == 0:
+            for edge in edges[revnode(ornode)]:
+                if len(revnode(edge)) > 1:
+                    return True
+    return False
+
+
 if len(sys.argv) != 4:
     print(f'Usage: {sys.argv[0]} graph.gfa homologous_nodes.matches hic_byread')
     exit()
@@ -47,6 +62,23 @@ res = variance ** 0.5
 sys.stderr.write("Loaded a graph with %d nodes and %d edges avg degree %f and stdev %f max is %f\n" % (
 G.number_of_nodes(), G.number_of_edges(), mean, res, mean + 5 * res))
 translate.close()
+
+#loading oriented graph
+for l in open(sys.argv[1], 'r'):
+    parts = l.strip().split('\t')
+    if parts[0] == 'S':
+        nodelines.append((parts[1], l.strip()))
+        nodelens[parts[1]] = len(parts[2])
+    elif parts[0] == 'L':
+        fromnode = (">" if parts[2] == "+" else "<") + parts[1]
+        tonode = (">" if parts[4] == "+" else "<") + parts[3]
+        edgelines.append((fromnode, tonode, l.strip()))
+        if fromnode not in edges:
+            edges[fromnode] = set()
+        if revnode(tonode) not in edges:
+            edges[revnode(tonode)] = set()
+        edges[fromnode].add(tonode)
+        edges[revnode(tonode)].add(revnode(fromnode))
 
 #dirty calculation median coverage, considering that most of the phasing is done
 all_lengths = {}
@@ -168,7 +200,8 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
             if dists[e[0]][e[1]] < MAX_GRAPH_DIST + G.nodes[e[1]]['length']:
                 C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
             #Tips are special case - gaps in coverage may break connections
-            elif len (G.__getitem__(e[0])) == 1 or len (G.__getitem__(e[1])) == 1:
+            elif IsTip(e[0], edges) or IsTip(e[1], edges):
+#            elif len(G.__getitem__(e[0])) == 1 or len (G.__getitem__(e[1])) == 1:
                 C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
 #                sys.stderr.write("Special case for tips, adding edge between %s and %s of weight %s\n"%(e[0], e[1], hicGraph[e[0]][e[1]]['weight']))
 
