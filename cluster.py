@@ -34,6 +34,7 @@ def IsTip(node, edges):
         if len(edges[ornode]) == 0:
             for edge in edges[revnode(ornode)]:
                 if len(revnode(edge)) > 1:
+                    print (f'Tip {node}')
                     return True
     return False
 
@@ -64,15 +65,18 @@ G.number_of_nodes(), G.number_of_edges(), mean, res, mean + 5 * res))
 translate.close()
 
 #loading oriented graph
+nodelines = []
+nodelens = []
+edges = {}
 for l in open(sys.argv[1], 'r'):
     parts = l.strip().split('\t')
     if parts[0] == 'S':
         nodelines.append((parts[1], l.strip()))
-        nodelens[parts[1]] = len(parts[2])
+#        nodelens[parts[1]] = len(parts[2])
     elif parts[0] == 'L':
         fromnode = (">" if parts[2] == "+" else "<") + parts[1]
         tonode = (">" if parts[4] == "+" else "<") + parts[3]
-        edgelines.append((fromnode, tonode, l.strip()))
+#        edgelines.append((fromnode, tonode, l.strip()))
         if fromnode not in edges:
             edges[fromnode] = set()
         if revnode(tonode) not in edges:
