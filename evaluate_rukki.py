@@ -46,7 +46,6 @@ def evaluate_rukki(rukkifile, triofile):
         prev_contig = ""
         for sp in path:
             p = sp[:-1]
-            print (p)
             if p in colors:
                 if colors[p] == "a":
                     unassigned += 1
@@ -54,6 +53,7 @@ def evaluate_rukki(rukkifile, triofile):
                 else:
                     if colors[p] != state and state != "0":
                         print(f"Discordant colors between {prev_contig} {p} !!!")
+                        print (strpath)
                     assigned += 1
                     prev_contig = p
                     state = colors[p]
