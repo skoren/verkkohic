@@ -31,11 +31,16 @@ def revnode(n):
 def IsTip(node, edges):
     for pref in ['>', '<']:
         ornode = pref + node
-        if len(edges[ornode]) == 0:
+        if ornode not in edges or len(edges[ornode]) == 0:
+            if revnode(ornode) not in edges:
+                continue
+#rc to the tip predeccor
             for edge in edges[revnode(ornode)]:
-                if len(revnode(edge)) > 1:
-                    print (f'Tip {node}')
-                    return True
+#alternative edge to tip that should be not a deadend
+                for alt_tip in edges[revnode(edge)]:
+                    if alt_tip in edges and len(edges[alt_tip])> 0:
+                        print (f'Tip {node}')
+                        return True
     return False
 
 
@@ -204,7 +209,7 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
             if dists[e[0]][e[1]] < MAX_GRAPH_DIST + G.nodes[e[1]]['length']:
                 C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
             #Tips are special case - gaps in coverage may break connections
-            elif IsTip(e[0], edges) or IsTip(e[1], edges):
+            elif IsTip(e[0], edges) and IsTip(e[1], edges):
 #            elif len(G.__getitem__(e[0])) == 1 or len (G.__getitem__(e[1])) == 1:
                 C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
 #                sys.stderr.write("Special case for tips, adding edge between %s and %s of weight %s\n"%(e[0], e[1], hicGraph[e[0]][e[1]]['weight']))
