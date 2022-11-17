@@ -166,6 +166,8 @@ sys.stderr.write("Loaded hic info with %d nodes and %d edges\n" % (hicGraph.numb
 #    sys.stderr.write("Edge from %s to %s of weight %s\n"%(node1, node2, hicGraph.get_edge_data(node1, node2)))
 translate.close()
 
+dists = dict(nx.all_pairs_dijkstra_path_length(G, weight=lambda u, v, d: G.nodes[v]['length']))
+sys.stderr.write("Distances counted\n")
 # connected components decomposition and log the IDs and partition each one
 # currently not going to do the right thing on rDNA component
 for c in sorted(nx.connected_components(G), key=len, reverse=True):
@@ -177,8 +179,7 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
 #    if "utig4-1014" not in C.nodes():
 #        continue
     Subgraph = G.subgraph(c).copy()
-    dists = dict(nx.all_pairs_dijkstra_path_length(Subgraph, weight=lambda u, v, d: Subgraph.nodes[v]['length']))
-    sys.stderr.write("Distances counted\n")
+
 
     # first we ignore any nodes that are too short
     short = []
@@ -206,12 +207,22 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
         # currently only added edges if these nodes are in the component and not matches (homologous) but should allow links to singletons too (to phase disconnected nodes correctly)
         if e[0] in C and e[1] in C and matchGraph.get_edge_data(e[0], e[1]) == None:
             # if edges are to distant in graph, hi-c info is trash
-            if dists[e[0]][e[1]] < MAX_GRAPH_DIST + G.nodes[e[1]]['length']:
-                C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
+            # using homologous edges when counting distances to help with coverage gaps
+            similar_edges = [set(), set()]
+            for ind in range (0, 2):
+                for match_edge in matchGraph.edges(e[ind]):
+                    similar_edges[ind].add(match_edge[0])
+                    similar_edges[ind].add(match_edge[1])
+                similar_edges[ind].add(e[ind])
+            for e0like in similar_edges[0]:
+                for e1like in similar_edges[1]:
+                    if dists[e0like][e1like] < MAX_GRAPH_DIST + G.nodes[e1like]['length']:
+                        C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
+                        break
             #Tips are special case - gaps in coverage may break connections
-            elif IsTip(e[0], edges) and IsTip(e[1], edges):
+#            elif IsTip(e[0], edges) and IsTip(e[1], edges):
 #            elif len(G.__getitem__(e[0])) == 1 or len (G.__getitem__(e[1])) == 1:
-                C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
+#                C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
 #                sys.stderr.write("Special case for tips, adding edge between %s and %s of weight %s\n"%(e[0], e[1], hicGraph[e[0]][e[1]]['weight']))
 
     # neighboring edges are encouraged to belong to the same component
