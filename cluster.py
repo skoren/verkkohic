@@ -303,5 +303,5 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
                         best_score = sum
             # for ()
             # cut_value, part = nx.stoer_wagner(C)
-        print(best_part)
-        print (best_score)
+        print(f'RES\t{best_part}')
+        print(best_score)
