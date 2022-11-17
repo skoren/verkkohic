@@ -216,7 +216,7 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
                 similar_edges[ind].add(e[ind])
             for e0like in similar_edges[0]:
                 for e1like in similar_edges[1]:
-                    if dists[e0like][e1like] < MAX_GRAPH_DIST + G.nodes[e1like]['length']:
+                    if e0like in dists and e1like in dists[e0like] and dists[e0like][e1like] < MAX_GRAPH_DIST + G.nodes[e1like]['length']:
                         C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
                         break
             #Tips are special case - gaps in coverage may break connections
