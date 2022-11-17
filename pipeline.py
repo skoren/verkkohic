@@ -55,9 +55,9 @@ for line in open (clustering_output, 'r'):
             for contig in arr:
                 if contig in contig_names:
                     if right:
-                        csv_file.write(f'{contig}"\t0\t100000\t0:100000\t#8888FF\n')
+                        csv_file.write(f'{contig}\t0\t100000\t0:100000\t#8888FF\n')
                     else:
-                        csv_file.write(f'{contig}"\t100000\t0\t100000:0\t#FF8888\n')
+                        csv_file.write(f'{contig}\t100000\t0\t100000:0\t#FF8888\n')
             right = True
 csv_file.close()
 
