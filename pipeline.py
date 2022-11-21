@@ -23,7 +23,7 @@ if len(sys.argv) < 3:
 cur_dir = os.path.abspath(os.path.dirname(__file__))
 input_dir = sys.argv[1]
 output_dir = sys.argv[2]
-eval_file = sys.stdout
+eval_file = ""
 if len(sys.argv) > 3:
     eval_file = os.path.join(sys.argv[2], sys.argv[3])
 
@@ -81,12 +81,12 @@ trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.t
 print (rukki_output)
 print(trio_file)
 if os.path.exists(trio_file):
-    e_file = open(eval_file, 'w')
+    if eval_file != "":
+        e_file = open(eval_file, 'w')
+    else:
+        e_file = sys.stdout
     e_file.write("Evaluating using all edges (including not phased with hi-c)\n")
-    e_file.close()
     evaluate_rukki.evaluate_rukki(rukki_output, trio_file, set(), eval_file)
-    e_file = open(eval_file, 'w')
     e_file.write("\n\nEvaluating using only long (hi-c-phased) edges\n")
-    e_file.close()
     evaluate_rukki.evaluate_rukki(rukki_output, trio_file, evaluate_rukki.get_phased_edges(csv_output), eval_file)
 

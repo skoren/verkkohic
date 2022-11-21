@@ -38,9 +38,8 @@ def get_phased_edges(phasedfile):
     return phased
 
 #Evaluate paths using only phased edges. If empty set passed - all edges are used.
-def evaluate_rukki(rukkifile, triofile, phased_edges, outfile):
+def evaluate_rukki(rukkifile, triofile, phased_edges, out_f):
     colors = {}
-    out_f = open(outfile, "w")
     for line in open(triofile, 'r'):
         arr = line.split()
         name = arr[0]
