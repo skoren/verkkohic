@@ -23,8 +23,13 @@ if len(sys.argv) < 3:
 cur_dir = os.path.abspath(os.path.dirname(__file__))
 input_dir = sys.argv[1]
 output_dir = sys.argv[2]
+eval_file = sys.stdout
+if len(sys.argv) > 3:
+    eval_file = os.path.join(sys.argv[2], sys.argv[3])
+
 os.makedirs(output_dir, exist_ok=True)
 #here should be mashmap running and parsing
+#TODO
 #mashmap -r unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.fasta -q unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.fasta -t 8 -f none --pi 95 -s 10000
 #cat mashmap.out |awk '{if ($NF > 99 && $4-$3 > 500000 && $1 != $6) print $1"\t"$6}'|sort |uniq > unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.matches
 matches_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.matches")
@@ -74,10 +79,12 @@ os.system(rukki_line)
 
 trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.trio.colors.csv")
 if os.path.exists(trio_file):
-    print ("Evaluating using all edges (including not phased with trio)")
-    evaluate_rukki(rukki_output, trio_file, set())
-    print ("\n\n")
-    print ("Evaluating using only long (hi-c-phased) edges")
-
-    evaluate_rukki(rukki_output, trio_file, get_phased_edges(csv_output))
+    e_file = open(eval_file, 'w')
+    e_file.write("Evaluating using all edges (including not phased with trio)\n")
+    e_file.close()
+    evaluate_rukki(rukki_output, trio_file, set(), eval_file)
+    e_file = open(eval_file, 'w')
+    e_file.write("\n\nEvaluating using only long (hi-c-phased) edges\n")
+    e_file.close()
+    evaluate_rukki(rukki_output, trio_file, get_phased_edges(csv_output), eval_file)
 

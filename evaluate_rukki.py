@@ -38,9 +38,9 @@ def get_phased_edges(phasedfile):
     return phased
 
 #Evaluate paths using only phased edges. If empty set passed - all edges are used.
-def evaluate_rukki(rukkifile, triofile, phased_edges):
+def evaluate_rukki(rukkifile, triofile, phased_edges, outfile):
     colors = {}
-
+    out_f = open(outfile, "w")
     for line in open(triofile, 'r'):
         arr = line.split()
         name = arr[0]
@@ -68,14 +68,15 @@ def evaluate_rukki(rukkifile, triofile, phased_edges):
                     continue
                 else:
                     if colors[p] != state and state != "0" and p in phased_edges:
-                        print(f"Discordant colors between {prev_contig} {p} !!!")
-                        print (strpath)
+                        out_f.write(f"Discordant colors between {prev_contig} {p} !!!\n")
+                        out_f.write(strpath +"\n")
                     assigned += 1
                     prev_contig = p
                     state = colors[p]
-    print (f"Among contigs in paths, unassigned/assigned {unassigned}/{assigned} trio colors")
+    out_f.write(f"Among contigs in paths, unassigned/assigned {unassigned}/{assigned} trio colors\n")
+    out_f.close()
                 
 if len(sys.argv) < 3:
-    print(f'Usage: {sys.argv[0]} <rukkifile> <triofile>')
+    print(f'Usage: {sys.argv[0]} <rukkifile> <triofile> ')
     exit()
-evaluate_rukki(sys.argv[1], sys.argv[2], set())
+evaluate_rukki(sys.argv[1], sys.argv[2], set(), sys.stdout)
