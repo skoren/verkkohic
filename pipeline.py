@@ -5,7 +5,7 @@ import os
 import random
 from os import listdir
 from os.path import isfile, join
-
+import evaluate_rukki
 if len(sys.argv) < 3:
     print(f'Usage: {sys.argv[0]} <input_dir> <output_dir>')
     exit()
@@ -23,6 +23,7 @@ if len(sys.argv) < 3:
 cur_dir = os.path.abspath(os.path.dirname(__file__))
 input_dir = sys.argv[1]
 output_dir = sys.argv[2]
+os.makedirs(output_dir, exist_ok=True)
 #here should be mashmap running and parsing
 #mashmap -r unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.fasta -q unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.fasta -t 8 -f none --pi 95 -s 10000
 #cat mashmap.out |awk '{if ($NF > 99 && $4-$3 > 500000 && $1 != $6) print $1"\t"$6}'|sort |uniq > unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.matches
@@ -66,6 +67,17 @@ csv_file.close()
 
 
 #../../devel/rukki/target/release/rukki trio --graph unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.noseq.gfa --markers unitig-popped-unitig-normal-connected-tip.colors.csv -p out.path.tsv
-rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output} -p {os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.tsv")}'
+rukki_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.tsv")
+rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output} -p {rukki_output}'
 #what about rukki options?
 os.system(rukki_line)
+
+trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.trio.colors.csv")
+if os.path.exists(trio_file):
+    print ("Evaluating using all edges (including not phased with trio)")
+    evaluate_rukki(rukki_output, trio_file, set())
+    print ("\n\n")
+    print ("Evaluating using only long (hi-c-phased) edges")
+
+    evaluate_rukki(rukki_output, trio_file, get_phased_edges(csv_output))
+
