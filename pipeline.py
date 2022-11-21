@@ -86,7 +86,7 @@ if os.path.exists(trio_file):
     else:
         e_file = sys.stdout
     e_file.write("Evaluating using all edges (including not phased with hi-c)\n")
-    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, set(), eval_file)
+    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, set(), e_file)
     e_file.write("\n\nEvaluating using only long (hi-c-phased) edges\n")
-    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, evaluate_rukki.get_phased_edges(csv_output), eval_file)
+    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, evaluate_rukki.get_phased_edges(csv_output), e_file)
 

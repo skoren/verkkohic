@@ -76,7 +76,6 @@ def evaluate_rukki(rukkifile, triofile, phased_edges, out_f):
                     prev_contig = p
                     state = colors[p]
     out_f.write(f"Among contigs in paths, using uncolored/colored {unassigned}/{assigned} edges, we see {errors} errors\n")
-    out_f.close()
 
 if __name__ == "__main__":                
     if len(sys.argv) < 3:
