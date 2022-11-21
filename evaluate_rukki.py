@@ -33,7 +33,7 @@ def get_phased_edges(phasedfile):
         arr = line.split()
         name = arr[0]
         color = "a"
-        if arr[4] == "#8888FF" || arr[4] == "#FF8888":
+        if arr[4] == "#8888FF" or arr[4] == "#FF8888":
             phased.add(name)
     return phased
 
@@ -52,7 +52,8 @@ def evaluate_rukki(rukkifile, triofile, phased_edges, outfile):
         colors[name] = color
 
     if len(phased_edges) == 0:
-        phased_edges == colors.keys()
+        for c in colors.keys():
+            phased_edges.add(c)
     unassigned = 0
     assigned = 0
     for line in open(rukkifile):
@@ -73,10 +74,11 @@ def evaluate_rukki(rukkifile, triofile, phased_edges, outfile):
                     assigned += 1
                     prev_contig = p
                     state = colors[p]
-    out_f.write(f"Among contigs in paths, unassigned/assigned {unassigned}/{assigned} trio colors\n")
+    out_f.write(f"Among contigs in paths, uncolored/colored {unassigned}/{assigned} edges\n")
     out_f.close()
-                
-if len(sys.argv) < 3:
-    print(f'Usage: {sys.argv[0]} <rukkifile> <triofile> ')
-    exit()
-evaluate_rukki(sys.argv[1], sys.argv[2], set(), sys.stdout)
+
+if __name__ == "__main__":                
+    if len(sys.argv) < 3:
+        print(f'Usage: {sys.argv[0]} <rukkifile> <triofile>')
+        exit()
+    evaluate_rukki(sys.argv[1], sys.argv[2], set(), sys.stdout)

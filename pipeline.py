@@ -78,13 +78,15 @@ rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output} -p {rukki_o
 os.system(rukki_line)
 
 trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.trio.colors.csv")
+print (rukki_output)
+print(trio_file)
 if os.path.exists(trio_file):
     e_file = open(eval_file, 'w')
-    e_file.write("Evaluating using all edges (including not phased with trio)\n")
+    e_file.write("Evaluating using all edges (including not phased with hi-c)\n")
     e_file.close()
-    evaluate_rukki(rukki_output, trio_file, set(), eval_file)
+    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, set(), eval_file)
     e_file = open(eval_file, 'w')
     e_file.write("\n\nEvaluating using only long (hi-c-phased) edges\n")
     e_file.close()
-    evaluate_rukki(rukki_output, trio_file, get_phased_edges(csv_output), eval_file)
+    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, evaluate_rukki.get_phased_edges(csv_output), eval_file)
 
