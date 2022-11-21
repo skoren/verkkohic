@@ -56,6 +56,7 @@ def evaluate_rukki(rukkifile, triofile, phased_edges, outfile):
             phased_edges.add(c)
     unassigned = 0
     assigned = 0
+    errors = 0
     for line in open(rukkifile):
         strpath = line.split()[1]
         path = strpath.split(',')
@@ -64,17 +65,18 @@ def evaluate_rukki(rukkifile, triofile, phased_edges, outfile):
         for sp in path:
             p = sp[:-1]
             if p in colors:
-                if colors[p] == "a":
+                if colors[p] == "a" or not p in phased_edges:
                     unassigned += 1
                     continue
                 else:
-                    if colors[p] != state and state != "0" and p in phased_edges:
+                    if colors[p] != state and state != "0":
                         out_f.write(f"Discordant colors between {prev_contig} {p} !!!\n")
                         out_f.write(strpath +"\n")
-                    assigned += 1
+                        errors += 1
+                    assigned += 1            
                     prev_contig = p
                     state = colors[p]
-    out_f.write(f"Among contigs in paths, uncolored/colored {unassigned}/{assigned} edges\n")
+    out_f.write(f"Among contigs in paths, using uncolored/colored {unassigned}/{assigned} edges, we see {errors} errors\n")
     out_f.close()
 
 if __name__ == "__main__":                
