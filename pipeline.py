@@ -42,7 +42,7 @@ noseq_gfa = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.h
 clustering_output = os.path.join(output_dir, "cluster.out")
 
 
-os.system(f'python3 cluster.py {noseq_gfa} {matches_file} {hic_file} > {clustering_output}')
+os.system(f'python3 cluster.py {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
 
 csv_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv")
 #Parsing clustering output

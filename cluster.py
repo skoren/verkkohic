@@ -44,8 +44,8 @@ def IsTip(node, edges):
     return False
 
 
-if len(sys.argv) != 4:
-    print(f'Usage: {sys.argv[0]} graph.gfa homologous_nodes.matches hic_byread')
+if len(sys.argv) != 5:
+    print(f'Usage: {sys.argv[0]} graph.gfa homologous_nodes.matches hic_byread output_dir')
     exit()
 # load the assembly gfa
 translate = open(sys.argv[1], 'r')
@@ -151,7 +151,7 @@ for line in translate:
     else:
         w = w['weight'] + add_w
         hicGraph[line[1]][line[2]]['weight'] = w
-compressed_file = open("hic.byread.compressed", 'w')
+compressed_file = open(os.path.join(sys.argv[4], "hic.byread.compressed"), 'w')
 max_w = 0
 for node1, node2 in hicGraph.edges():
     if max_w < hicGraph[node1][node2]["weight"]:
