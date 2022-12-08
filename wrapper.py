@@ -10,7 +10,7 @@ for line in open(sys.argv[1], 'r'):
     arr = line.split()
     if len(arr)==2 and os.path.exists(arr[0]):
         os.system(f'python3 pipeline.py {arr[0]} {os.path.join(out_prefix, arr[1])} {sys.argv[2]}')
-#        print (arr[1])
+        print (arr[1])
 total_count = 0
 hiconly_count = 0
 datasets = 0

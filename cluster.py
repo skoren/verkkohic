@@ -2,6 +2,7 @@ import sys
 import random
 import networkx as nx
 import math
+import os
 from networkx.algorithms import community
 
 def check_non_empty(part, G):
