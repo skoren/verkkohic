@@ -12,8 +12,9 @@ def check_non_empty(part, G):
 
 
 MIN_LEN = 200000  # best result so far with 200000
-FIXED_WEIGHT = 100000  # best result so far with 100000
+FIXED_WEIGHT = 100000  # best result so far with 100000 
 #currently replaced with max pairwise weight among datasets
+
 MAX_GRAPH_DIST = 10000000  # hi-c links over 10M are believed to be useless
 MAX_COV = 100  # temporary coverage cutoff, currently replaced by median coverage from gfa
 
@@ -232,7 +233,8 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
             add_w = 0
             if w != 0:
                 add_w = w['weight']
-            C.add_edge(e[0], e[1], weight=FIXED_WEIGHT + add_w)
+#            C.add_edge(e[0], e[1], weight=FIXED_WEIGHT + add_w)
+            C.add_edge(e[0], e[1], weight=0 + add_w)
 #            aux_nodes = aux_nodes
     if C.number_of_nodes() > 1:
         for n in C.nodes():
