@@ -123,6 +123,7 @@ for line in translate:
         continue
 
     matchGraph.add_edge(line[0], line[1])
+    G.add_edge(line[0], line[1])
 sys.stderr.write(
     "Loaded match info with %d nodes and %d edges\n" % (matchGraph.number_of_nodes(), matchGraph.number_of_edges()))
 translate.close()
