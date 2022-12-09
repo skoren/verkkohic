@@ -34,6 +34,8 @@ os.makedirs(output_dir, exist_ok=True)
 #cat mashmap.out |awk '{if ($NF > 99 && $4-$3 > 500000 && $1 != $6) print $1"\t"$6}'|sort |uniq > unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.matches
 matches_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.matches")
 hic_file = os.path.join(input_dir, "hic_mapping.byread.output")
+if not os.path.exists(hic_file):
+    hic_file = os.path.join(input_dir, "hic.byread.compressed")
 compressed_hic = os.path.join(output_dir, "hic.byread.compressed")
 if os.path.exists(compressed_hic):
     hic_file = compressed_hic
@@ -78,6 +80,7 @@ csv_file.close()
 #../../devel/rukki/target/release/rukki trio --graph unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.noseq.gfa --markers unitig-popped-unitig-normal-connected-tip.colors.csv -p out.path.tsv
 rukki_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.tsv")
 rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output} -p {rukki_output}'
+rukki_line += " --issue-len 200000  --marker-ratio 5. --issue-ratio 3. --issue-cnt 100 "
 #what about rukki options?
 os.system(rukki_line)
 
