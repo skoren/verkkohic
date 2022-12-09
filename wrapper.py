@@ -6,8 +6,13 @@ import random
 from os import listdir
 from os.path import isfile, join
 out_prefix = "/data/antipovd2/data/"
+out_prefix = "/Users/antipovd2/work/verkkohic/res/"
+if len(sys.argv) < 3:
+    print(f'Usage: {sys.argv[0]} <input_file> <eval_name>')
+    exit()
 for line in open(sys.argv[1], 'r'):
     arr = line.split()
+    print (arr)
     if len(arr)==2 and os.path.exists(arr[0]):
         os.system(f'python3 pipeline.py {arr[0]} {os.path.join(out_prefix, arr[1])} {sys.argv[2]}')
         print (arr[1])
