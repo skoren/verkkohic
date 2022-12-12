@@ -63,7 +63,7 @@ if len(chrs) == 0:
     for name in colors.keys():
         chrs['ALL'].add(name)
 for line in open (comp_file, 'r'):
-    if line[0] != "(":
+    if line.split()[0] != "RES":
         continue
     print()
     print(line.strip())

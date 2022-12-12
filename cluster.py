@@ -21,6 +21,9 @@ MAX_COV = 100  # temporary coverage cutoff, currently replaced by median coverag
 
 KLIN_STARTS = 1000  # number of different starts of kernighan lin
 KLIN_ITER = 10000  # number of iterations inside kernighan lin
+
+MAX_SHORT_COMPONENT = 50 # we remove from consideration each connected compoents of edges < MIN_LEN that is larger than
+#this cutoff
 print(nx.__version__)
 print(nx.__file__)
 G = nx.Graph()
@@ -30,6 +33,7 @@ def revnode(n):
     assert n[0] == "<" or n[0] == ">"
     return (">" if n[0] == "<" else "<") + n[1:]
 
+#Currently not in use anymore
 def IsTip(node, edges):
     for pref in ['>', '<']:
         ornode = pref + node
@@ -71,6 +75,37 @@ sys.stderr.write("Loaded a graph with %d nodes and %d edges avg degree %f and st
 G.number_of_nodes(), G.number_of_edges(), mean, res, mean + 5 * res))
 translate.close()
 
+#Here we remove large connected components of short edge, just to exclude rDNA cluster
+shorts = set()
+for node in G.nodes():
+    if G.nodes[node]['length'] < MIN_LEN:
+        shorts.add(node)
+sh_G = G.subgraph(shorts)
+nodes_deleted = 0
+components_deleted = 0
+to_delete = []
+for comp in nx.connected_components(sh_G):
+    if len(comp) > MAX_SHORT_COMPONENT:
+        components_deleted += 1
+        for e in comp:
+            nodes_deleted += 1
+            to_delete.append(e)
+
+G.remove_nodes_from(to_delete)
+sys.stderr.write(f'Removed {components_deleted} short nodes components and {nodes_deleted} short nodes. New '
+                 f'number of nodes {G.number_of_nodes()}\n')
+filtered_graph = open(os.path.join(sys.argv[4], "filtered.gfa"), 'w')
+delete_set = set(to_delete)
+translate = open(sys.argv[1], 'r')
+
+for line in translate:
+    arr = line.split()
+    if arr[0] == "S":
+        if not (arr[1] in delete_set):
+            filtered_graph.write(line)
+    if arr[0] == "L":
+        if not(arr[1] in delete_set) and not(arr[3] in delete_set):
+            filtered_graph.write(line)
 #loading oriented graph
 nodelines = []
 nodelens = []
@@ -123,7 +158,8 @@ for line in translate:
         continue
 
     matchGraph.add_edge(line[0], line[1])
-    G.add_edge(line[0], line[1])
+    if line[0] in G.nodes and line[1] in G.nodes:
+        G.add_edge(line[0], line[1])
 sys.stderr.write(
     "Loaded match info with %d nodes and %d edges\n" % (matchGraph.number_of_nodes(), matchGraph.number_of_edges()))
 translate.close()
