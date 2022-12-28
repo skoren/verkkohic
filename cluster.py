@@ -23,6 +23,8 @@ KLIN_STARTS = 1000  # number of different starts of kernighan lin
 KLIN_ITER = 10000  # number of iterations inside kernighan lin
 
 MAX_SHORT_COMPONENT = 50 # we remove from consideration each connected compoents of edges < MIN_LEN that is larger than
+
+MAX_WEIGHT = 10 # Ignore edges with no links
 #this cutoff
 print(nx.__version__)
 print(nx.__file__)
@@ -209,6 +211,8 @@ dists = dict(nx.all_pairs_dijkstra_path_length(G, weight=lambda u, v, d: G.nodes
 sys.stderr.write("Distances counted\n")
 # connected components decomposition and log the IDs and partition each one
 # currently not going to do the right thing on rDNA component
+
+#TODO: add homologous links BEFORE component check?
 for c in sorted(nx.connected_components(G), key=len, reverse=True):
     print("Connected component with %d nodes is: %s" % (len(c), c))
 
@@ -220,13 +224,15 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
     Subgraph = G.subgraph(c).copy()
 
 
-    # first we ignore any nodes that are too short
+    # first we ignore any nodes that are too short or have too few links.
     short = []
     tips = set()
     for n in C.nodes():
         if n not in G:
             sys.stderr.write("Error got a node not in original graph %s !" % (n))
             sys.exit()
+#        if not (n in matchGraph):
+
         if G.nodes[n]['length'] < MIN_LEN:
 #            sys.stderr.write("While partitoning dropping node %s its too short\n" % (n))
             short.append(n)
@@ -245,10 +251,10 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
     for e in hicGraph.edges(c):
         # currently only added edges if these nodes are in the component and not matches (homologous) but should allow links to singletons too (to phase disconnected nodes correctly)
         if e[0] in C and e[1] in C and matchGraph.get_edge_data(e[0], e[1]) == None:
-            # if edges are to distant in graph, hi-c info is trash
+            # if edges are too distant in graph, hi-c info is trash
             # using homologous edges when counting distances to help with coverage gaps
             similar_edges = [set(), set()]
-            for ind in range (0, 2):
+            for ind in range(0, 2):
                 for match_edge in matchGraph.edges(e[ind]):
                     similar_edges[ind].add(match_edge[0])
                     similar_edges[ind].add(match_edge[1])
@@ -265,6 +271,7 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
 #                sys.stderr.write("Special case for tips, adding edge between %s and %s of weight %s\n"%(e[0], e[1], hicGraph[e[0]][e[1]]['weight']))
 
     # neighboring edges are encouraged to belong to the same component
+    #Currently not in use
     for e in G.edges(c):
         if e[0] in C and e[1] in C and matchGraph.get_edge_data(e[0], e[1]) == None:
             w = hicGraph.get_edge_data(e[0], e[1], 0)
@@ -274,6 +281,8 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
 #            C.add_edge(e[0], e[1], weight=FIXED_WEIGHT + add_w)
             C.add_edge(e[0], e[1], weight=0 + add_w)
 #            aux_nodes = aux_nodes
+
+
     if C.number_of_nodes() > 1:
         for n in C.nodes():
             if n in matchGraph:
