@@ -6,13 +6,13 @@ import re
 
 def evaluate_telomers(paths, t2t_contigs):
     telomere_contigs = set()
-    for line in open(sys.argv[2], 'r'):
+    for line in open(t2t_contigs, 'r'):
         telomere_contigs.add(line.split()[0]+"+")
         telomere_contigs.add(line.split()[0]+"-")
 
     t2t_paths = 0
 
-    for line in open(sys.argv[1], 'r'):
+    for line in open(paths, 'r'):
         path = line.split()[1].split(',')
         if len(path) > 1 and path[0] in telomere_contigs and path[-1] in telomere_contigs:
             t2t_paths += 1
