@@ -6,9 +6,9 @@ import re
 import telomere_check
 import os
 
-submit_telomere = "/data/antipovd2/devel/vgp-assembly/pipeline/telomere/_submit_telomere.sh"
 data_file = "/data/antipovd2//devel/verkkohic/human_only.txt"
 data_dir = "/data/antipovd2/data/"
+data_dir = "/Users/antipovd2/work/verkkohic/data/"
 
 for dir in os.listdir(data_dir):
     workdir = os.path.join(data_dir, dir)
