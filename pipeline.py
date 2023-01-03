@@ -83,6 +83,8 @@ rukki_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-t
 rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output} -p {rukki_output}'
 rukki_line += " --issue-len 200000  --marker-ratio 5. --issue-ratio 3. --issue-cnt 100 "
 #what about rukki options?
+rukki_line += " --init-assign out_init_ann.csv --refined-assign out_refined_ann.csv --final-assign out_final_ann.csv"
+rukki_line += " --marker-sparsity 5000 --issue-sparsity 1000 --try-fill-bubbles"
 os.system(rukki_line)
 
 trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.trio.colors.csv")
