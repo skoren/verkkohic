@@ -24,7 +24,7 @@ KLIN_ITER = 10000  # number of iterations inside kernighan lin
 
 MAX_SHORT_COMPONENT = 50 # we remove from consideration each connected compoents of edges < MIN_LEN that is larger than
 
-MAX_WEIGHT = 10 # Ignore edges with no links
+MIN_WEIGHT = 10 # Ignore edges with few links
 #this cutoff
 print(nx.__version__)
 print(nx.__file__)
@@ -109,6 +109,7 @@ for line in translate:
         if not(arr[1] in delete_set) and not(arr[3] in delete_set):
             filtered_graph.write(line)
 #loading oriented graph
+#TODO: only place which used it is likely outdated
 nodelines = []
 nodelens = []
 edges = {}
@@ -160,10 +161,12 @@ for line in translate:
         continue
 
     matchGraph.add_edge(line[0], line[1])
-    if line[0] in G.nodes and line[1] in G.nodes:
-        G.add_edge(line[0], line[1])
-sys.stderr.write(
-    "Loaded match info with %d nodes and %d edges\n" % (matchGraph.number_of_nodes(), matchGraph.number_of_edges()))
+    #Adding link between matched edges to include separated sequence to main component
+
+
+    #if line[0] in G.nodes and line[1] in G.nodes:
+     #   G.add_edge(line[0], line[1])
+sys.stderr.write("Loaded match info with %d nodes and %d edges\n" % (matchGraph.number_of_nodes(), matchGraph.number_of_edges()))
 translate.close()
 
 # load hic connections based on mappings, weight corresponds to number of times we see a connection
@@ -212,7 +215,6 @@ sys.stderr.write("Distances counted\n")
 # connected components decomposition and log the IDs and partition each one
 # currently not going to do the right thing on rDNA component
 
-#TODO: add homologous links BEFORE component check?
 for c in sorted(nx.connected_components(G), key=len, reverse=True):
     print("Connected component with %d nodes is: %s" % (len(c), c))
 
@@ -236,9 +238,20 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
         if G.nodes[n]['length'] < MIN_LEN:
 #            sys.stderr.write("While partitoning dropping node %s its too short\n" % (n))
             short.append(n)
+
         elif G.nodes[n]['coverage'] > MAX_COV:
             sys.stderr.write("While partitoning dropping node %s coverage too high\n" % (n))
             short.append(n)
+        else:
+            good = False
+            for e in hicGraph.edges(n):
+
+                if (e[0] != n or e[1] != n) and hicGraph[e[0]][e[1]]["weight"] > MIN_WEIGHT \
+                        and (e[0] in C and e[1] in C):
+                    good = True
+            if not good:
+                sys.stderr.write("While partitoning dropping node %s low links count\n" % (n))
+                short.append(n)
 
     C.remove_nodes_from(short)
     # Adding some auxilary vertices to allow slightly unbalanced partitions
@@ -259,16 +272,12 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
                     similar_edges[ind].add(match_edge[0])
                     similar_edges[ind].add(match_edge[1])
                 similar_edges[ind].add(e[ind])
+#TODO: likely this is not needed anymore since we already added links between homologous edges.
             for e0like in similar_edges[0]:
                 for e1like in similar_edges[1]:
                     if e0like in dists and e1like in dists[e0like] and dists[e0like][e1like] < MAX_GRAPH_DIST + G.nodes[e1like]['length']:
                         C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
                         break
-            #Tips are special case - gaps in coverage may break connections
-#            elif IsTip(e[0], edges) and IsTip(e[1], edges):
-#            elif len(G.__getitem__(e[0])) == 1 or len (G.__getitem__(e[1])) == 1:
-#                C.add_edge(e[0], e[1], weight=hicGraph[e[0]][e[1]]['weight'])
-#                sys.stderr.write("Special case for tips, adding edge between %s and %s of weight %s\n"%(e[0], e[1], hicGraph[e[0]][e[1]]['weight']))
 
     # neighboring edges are encouraged to belong to the same component
     #Currently not in use
@@ -284,6 +293,7 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
 
 
     if C.number_of_nodes() > 1:
+#TODO: why not just iterate on matchGraph.edges()?
         for n in C.nodes():
             if n in matchGraph:
                 for ec in matchGraph.edges(n):
@@ -299,6 +309,7 @@ for c in sorted(nx.connected_components(G), key=len, reverse=True):
             random.seed(seed)
             p1 = []
             p2 = []
+            #debug code
             if False: #"utig4-1014" in C.nodes():
                 shastas_set = {'utig4-1448', 'utig4-2694', 'utig4-1015', 'utig4-1111', 'utig4-631', 'utig4-341', 'utig4-1444', 'utig4-1449', 'utig4-872', 'utig4-1558', 'utig4-1607', 'utig4-342', 'utig4-1850', 'utig4-1113', 'utig4-1531', 'utig4-1076', 'utig4-1684', 'utig4-371', 'utig4-874', 'utig4-1062'}
                 for n in C.nodes():
