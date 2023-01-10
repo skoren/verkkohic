@@ -46,7 +46,7 @@ clustering_output = os.path.join(output_dir, "cluster.out")
 
 csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.UPDshasta.colors.csv")
 shutil.copy(csv_output, os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv"))
-'''
+
 os.system(f'python3 cluster.py {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
 csv_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv")
 
@@ -74,22 +74,28 @@ for line in open (clustering_output, 'r'):
                         csv_file.write(f'{contig}\t100000\t0\t100000:0\t#FF8888\n')
             right = True
 csv_file.close()
-'''
+
 #cat cluster.out |grep -A 1 Seed|grep -v Initial | grep -v Seed |awk -F "}," '{alen=split($1, a, ","); blen=split($2, b, ","); for (i = 1; i<=alen; i++) { print a[i]"\t0\t100000\t0:100000\t#8888FF"} for (i = 1; i<= blen; i++) {print b[i]"\t100000\t0\t100000:0\t#FF8888"} }'|sed 's/({//g' |sed 's/})//g' |sed s/\'//g|sed s/\ //g |sed 's/{//g' | sort |uniq |grep -w -v -f unassigned >> unitig-popped-unitig-normal-connected-tip.colors.csv
 #hi-c gfa(noseq) trio_colors
 
 
 #../../devel/rukki/target/release/rukki trio --graph unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.noseq.gfa --markers unitig-popped-unitig-normal-connected-tip.colors.csv -p out.path.tsv
-rukki_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.tsv")
-rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output} -p {rukki_output}'
+rukki_output_tsv = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.tsv")
+rukki_output_gaf = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.gaf")
+
+rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output}'
+
 rukki_line += " --issue-len 200000  --marker-ratio 5. --issue-ratio 3. --issue-cnt 100 "
 #what about rukki options?
 rukki_line += f'--init-assign {os.path.join(output_dir, "out_init_ann.csv")} --refined-assign {os.path.join(output_dir, "out_refined_ann.csv")} --final-assign {os.path.join(output_dir, "out_final_ann.csv")}'
 rukki_line += " --marker-sparsity 5000 --issue-sparsity 1000 --try-fill-bubbles"
-os.system(rukki_line)
+rukki_output_line = f' -p {rukki_output_tsv}'
+os.system(rukki_line + rukki_output_line)
+rukki_output_line = f' --gaf-format -p {rukki_output_gaf}'
+os.system(rukki_line + rukki_output_line)
 
 trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.trio.colors.csv")
-print (rukki_output)
+print (rukki_output_tsv)
 print(trio_file)
 if os.path.exists(trio_file):
     if eval_file != "":
@@ -97,7 +103,7 @@ if os.path.exists(trio_file):
     else:
         e_file = sys.stdout
     e_file.write("Evaluating using all edges (including not phased with hi-c)\n")
-    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, set(), e_file)
+    evaluate_rukki.evaluate_rukki(rukki_output_tsv, trio_file, set(), e_file)
     e_file.write("\n\nEvaluating using only long (hi-c-phased) edges\n")
-    evaluate_rukki.evaluate_rukki(rukki_output, trio_file, evaluate_rukki.get_phased_edges(csv_output), e_file)
+    evaluate_rukki.evaluate_rukki(rukki_output_tsv, trio_file, evaluate_rukki.get_phased_edges(csv_output), e_file)
 
