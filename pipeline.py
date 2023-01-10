@@ -44,8 +44,9 @@ noseq_gfa = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.h
 clustering_output = os.path.join(output_dir, "cluster.out")
 
 
-csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.hic-shasta.colors.csv")
-
+csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.UPDshasta.colors.csv")
+shutil.copy(csv_output, os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv"))
+'''
 os.system(f'python3 cluster.py {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
 csv_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv")
 
@@ -73,7 +74,7 @@ for line in open (clustering_output, 'r'):
                         csv_file.write(f'{contig}\t100000\t0\t100000:0\t#FF8888\n')
             right = True
 csv_file.close()
-
+'''
 #cat cluster.out |grep -A 1 Seed|grep -v Initial | grep -v Seed |awk -F "}," '{alen=split($1, a, ","); blen=split($2, b, ","); for (i = 1; i<=alen; i++) { print a[i]"\t0\t100000\t0:100000\t#8888FF"} for (i = 1; i<= blen; i++) {print b[i]"\t100000\t0\t100000:0\t#FF8888"} }'|sed 's/({//g' |sed 's/})//g' |sed s/\'//g|sed s/\ //g |sed 's/{//g' | sort |uniq |grep -w -v -f unassigned >> unitig-popped-unitig-normal-connected-tip.colors.csv
 #hi-c gfa(noseq) trio_colors
 
@@ -83,7 +84,7 @@ rukki_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-t
 rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output} -p {rukki_output}'
 rukki_line += " --issue-len 200000  --marker-ratio 5. --issue-ratio 3. --issue-cnt 100 "
 #what about rukki options?
-rukki_line += " --init-assign out_init_ann.csv --refined-assign out_refined_ann.csv --final-assign out_final_ann.csv"
+rukki_line += f'--init-assign {os.path.join(output_dir, "out_init_ann.csv")} --refined-assign {os.path.join(output_dir, "out_refined_ann.csv")} --final-assign {os.path.join(output_dir, "out_final_ann.csv")}'
 rukki_line += " --marker-sparsity 5000 --issue-sparsity 1000 --try-fill-bubbles"
 os.system(rukki_line)
 

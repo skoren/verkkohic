@@ -3,6 +3,7 @@ import random
 import networkx as nx
 import math
 import os
+import graph_functions
 from networkx.algorithms import community
 
 def check_non_empty(part, G):
@@ -28,7 +29,7 @@ MIN_WEIGHT = 10 # Ignore edges with few links
 #this cutoff
 print(nx.__version__)
 print(nx.__file__)
-G = nx.Graph()
+
 
 def revnode(n):
     assert len(n) >= 2
@@ -56,48 +57,25 @@ if len(sys.argv) != 5:
     print(f'Usage: {sys.argv[0]} graph.gfa homologous_nodes.matches hic_byread output_dir')
     exit()
 # load the assembly gfa
-translate = open(sys.argv[1], 'r')
-for line in translate:
-    if "#" in line:
-        continue
-    line = line.strip().split()
+G = nx.Graph()
+graph_functions.load_indirect_graph(sys.argv[1], G)
 
-    if line[0] == "S":
-        G.add_node(line[1], length=int(line[3][5:]), coverage=float(line[5][5:]))
-    elif line[0] == "L":
-        if line[1] not in G or line[3] not in G:
-            sys.stderr.write("Warning, skip link between nodes not in graph:%s" % (line))
-            sys.exit(1)
-        G.add_edge(line[1], line[3])
 degrees = [val for (node, val) in G.degree()]
 mean = sum(degrees) / G.number_of_nodes()
 variance = sum([((x - mean) ** 2) for x in degrees]) / G.number_of_nodes()
 res = variance ** 0.5
 sys.stderr.write("Loaded a graph with %d nodes and %d edges avg degree %f and stdev %f max is %f\n" % (
 G.number_of_nodes(), G.number_of_edges(), mean, res, mean + 5 * res))
-translate.close()
+
+#Store rDNA component, not to add additional links from matchGraph
+largest_component = max(nx.connected_components(G), key=len)
+sys.stderr.write(f"Found an rDNA huge component of {len(largest_component)} edges\n")
 
 #Here we remove large connected components of short edge, just to exclude rDNA cluster
-shorts = set()
-for node in G.nodes():
-    if G.nodes[node]['length'] < MIN_LEN:
-        shorts.add(node)
-sh_G = G.subgraph(shorts)
-nodes_deleted = 0
-components_deleted = 0
-to_delete = []
-for comp in nx.connected_components(sh_G):
-    if len(comp) > MAX_SHORT_COMPONENT:
-        components_deleted += 1
-        for e in comp:
-            nodes_deleted += 1
-            to_delete.append(e)
+delete_set = graph_functions.remove_large_tangles(G, MIN_LEN, MAX_SHORT_COMPONENT)
 
-G.remove_nodes_from(to_delete)
-sys.stderr.write(f'Removed {components_deleted} short nodes components and {nodes_deleted} short nodes. New '
-                 f'number of nodes {G.number_of_nodes()}\n')
 filtered_graph = open(os.path.join(sys.argv[4], "filtered.gfa"), 'w')
-delete_set = set(to_delete)
+
 translate = open(sys.argv[1], 'r')
 
 for line in translate:
@@ -149,23 +127,34 @@ MAX_COV = med_cov * 1.5
 # load pairs of matching nodes based on self-similarity
 matchGraph = nx.Graph()
 translate = open(sys.argv[2], 'r')
+
+component_colors = {}
+current_color = 0
+for c in sorted(nx.connected_components(G), key=len, reverse=True):
+    print (f" component {current_color} len {len(c)}")
+    for e in c:
+        component_colors[e] = current_color
+    current_color += 1
 for line in translate:
     if "#" in line:
         continue
     line = line.strip().split()
-
     if len(line) < 2:
         continue
-
     if line[0] == line[1]:
         continue
-
     matchGraph.add_edge(line[0], line[1])
     #Adding link between matched edges to include separated sequence to main component
 
+    if line[0] in G.nodes and line[1] in G.nodes:
+        if component_colors[line[0]] != component_colors[line[1]]:
+            if line[0] in largest_component and line[1] in largest_component:
+                print(f"Attempt to restore removed link in former rDNA component between {line[0]} {line[1]} forbidden")
+            else:
+                print(f"Currently not adding graph link between homologous {line[0]} {line[1]}, components {component_colors[line[0]]} "
+                      f" and {component_colors[line[1]]}")
+#                G.add_edge(line[0], line[1])
 
-    #if line[0] in G.nodes and line[1] in G.nodes:
-     #   G.add_edge(line[0], line[1])
 sys.stderr.write("Loaded match info with %d nodes and %d edges\n" % (matchGraph.number_of_nodes(), matchGraph.number_of_edges()))
 translate.close()
 

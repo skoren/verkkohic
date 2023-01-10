@@ -11,6 +11,8 @@ def evaluate_set(contig_set, lengths, colors):
     m_len = 0
     p_len = 0
     u_len = 0
+    m_count = 0
+    p_count = 0
     for contig in contig_set:
         if contig in lengths:
             l = lengths[contig]
@@ -19,13 +21,21 @@ def evaluate_set(contig_set, lengths, colors):
             else:
                 if colors[contig] == 'm':
                     m_len += l
+                    m_count += 1
                 elif colors[contig] == 'p':
                     p_len += l
+                    p_count += 1
     total_l = m_len + p_len + u_len
     if total_l > 0:
         print(f'Total & haplo lengths {total_l}    {m_len / total_l:.3f}/{p_len / total_l:.3f}/{u_len / total_l:.3f}')
         if m_len > 0 and p_len > 0:
             print('BAD')
+            print(contig_set)
+            if m_len < p_len:
+                return m_len, m_count
+            else:
+                return p_len, p_count
+    return 0,0
 def evaluate_dataset(hic_file, gfa_file, trio_file, chromosomal_file):
     # hi-c gfa(noseq) trio_colors
     chrs = {}
@@ -69,7 +79,8 @@ def evaluate_dataset(hic_file, gfa_file, trio_file, chromosomal_file):
     G = nx.Graph()
     graph_functions.load_indirect_graph(gfa_file, G)
     graph_functions.remove_large_tangles(G, 200000, 100)
-
+    wrong_len = 0
+    wrong_int = 0
     for c in sorted(nx.connected_components(G), key=len, reverse=True):
         #    print("Connected component with %d nodes is: %s" % (len(c), c))
         mset = set()
@@ -83,9 +94,15 @@ def evaluate_dataset(hic_file, gfa_file, trio_file, chromosomal_file):
                     mset.add(e)
                 count += 1
         if len(mset) + len (pset) > 1:
-            print(f"Evaluating component of {len(mset)} and {len(pset)} edges of 1/2 haplotypes")
-            evaluate_set(mset, lengths, trio_colors)
-            evaluate_set(pset, lengths, trio_colors)
+#            print(f"Evaluating component of {len(mset)} and {len(pset)} edges of 1/2 haplotypes")
+            w_len, w_int = evaluate_set(mset, lengths, trio_colors)
+            wrong_len += w_len
+            wrong_int += w_int
+            w_len, w_int = evaluate_set(pset, lengths, trio_colors)
+            wrong_len += w_len
+            wrong_int += w_int
+    print(f'length and count of erroneous edges {wrong_len} {wrong_int}')
+    return wrong_len, wrong_int
 '''
     for line in open(comp_file, 'r'):
         if line.split()[0] != "RES":
@@ -112,11 +129,13 @@ def evaluate_dataset(hic_file, gfa_file, trio_file, chromosomal_file):
     #    exit()
 '''
 
-if len(sys.argv) < 4:
-    print(f'Usage: {sys.argv[0]} <hi-c phasing results> <graph.gfa> <trio coloring> [mashmap based chromosome assignment]')
-    exit()
+
 
 if __name__ == "__main__":
+    if len(sys.argv) < 4:
+        print(
+            f'Usage: {sys.argv[0]} <hi-c phasing results> <graph.gfa> <trio coloring> [mashmap based chromosome assignment]')
+        exit()
     chromosomal_file = ""
     if len (sys.argv) == 5:
         chromosomal_file = sys.argv[4]

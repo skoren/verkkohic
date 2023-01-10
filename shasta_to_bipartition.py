@@ -2,6 +2,7 @@
 import sys
 import random
 import networkx as nx
+import graph_functions
 import math
 from networkx.algorithms import community
 
@@ -15,8 +16,8 @@ print(nx.__version__)
 print(nx.__file__)
 G = nx.Graph()
 
-if len(sys.argv)!=3:
-    print (f'Usage: {sys.argv[0]} graph.gfa shasta_clustering')
+if len(sys.argv) != 3:
+    print (f'Usage: {sys.argv[0]} <graph.gfa> <clustering.csv>')
     exit ()
 #load the assembly gfa
 translate = open(sys.argv[1], 'r')
@@ -42,8 +43,10 @@ for line in open (sys.argv[2]):
         haplo = 'm'
     colors[contig] = haplo
 count = 0
-
+#Let's split rDNA component
+graph_functions.remove_large_tangles(G, 200000, 50)
 for c in sorted(nx.connected_components(G), key=len, reverse=True):
+
 #    print("Connected component with %d nodes is: %s" % (len(c), c))
     mset = set()
     pset = set()
