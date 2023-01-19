@@ -1,7 +1,7 @@
 #!/bin/bash
 module load gcc/9.2.0 
 module load mashmap
-#module load snakemake
+module load snakemake
 #PATH=$PATH:/data/korens/devel/verkko-tip/:/gpfs/gsfs11/users/antipovd2/devel/tmp_pstools/
 #PSTOOLS=/gpfs/gsfs11/users/antipovd2/devel/tmp_pstools/
 #VERKKO =/data/korens/devel/verkko-tip/
@@ -41,6 +41,10 @@ fi
 
 if [ -n "$SLURM_JOB_ID" ] ; then
 THEPATH=$(scontrol show job $SLURM_JOBID | awk -F= '/Command=/{print $2}')
+echo "THEPATH1 $THEPATH"
+THEPATH=`echo "${THEPATH}" | head -1`
+echo "THEPATH2 $THEPATH"
+
 echo "Detected SLURM"
 else
 THEPATH=$(realpath $0)
@@ -48,7 +52,13 @@ fi
 
 echo "Path of script detected $THEPATH"
 SCRIPT_DIR=$(dirname $THEPATH)
+SCRIPT_DIR=$(realpath $SCRIPT_DIR)
+SCRIPT_DIR=`echo "${SCRIPT_DIR}" | head -1`
 echo "---Running main script"
+echo "Directory of the script $SCRIPT_DIR "
+echo "Path to script..."
+echo "$SCRIPT_DIR/hicverkko.py"
+
 python3 $SCRIPT_DIR/hicverkko.py $1 $2 
 
 

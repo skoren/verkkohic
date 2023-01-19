@@ -95,9 +95,10 @@ rukki_output_line = f' -p {rukki_output_tsv}'
 os.system(rukki_line + rukki_output_line)
 rukki_output_line = f' --gaf-format -p {rukki_output_gaf}'
 os.system(rukki_line + rukki_output_line)
+print (rukki_output_tsv)
+
 '''
 trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.trio.colors.csv")
-print (rukki_output_tsv)
 print(trio_file)
 if os.path.exists(trio_file):
     if eval_file != "":
