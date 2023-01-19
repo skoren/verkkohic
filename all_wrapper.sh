@@ -54,9 +54,9 @@ python3 $SCRIPT_DIR/hicverkko.py $1 $2
 
 echo "---Running rukki on the resulting clustering"
 params=""
-params="$params --init-assign out_init_ann.csv"
-params="$params --refined-assign out_refined_ann.csv"
-params="$params --final-assign out_final_ann.csv"
+params="$params --init-assign $2/out_init_ann.csv"
+params="$params --refined-assign $2/out_refined_ann.csv"
+params="$params --final-assign $2/out_final_ann.csv"
 params="$params --marker-sparsity 5000"
 params="$params --issue-sparsity 1000"
 params="$params --try-fill-bubbles"
@@ -67,8 +67,8 @@ else
    params="$params --issue-len 2000000 --marker-ratio 3. --issue-ratio 2. --issue-cnt 1000"
 fi
 
-$VERKKO/lib/verkko/bin/rukki trio -g assembly.hpc.noseq.gfa -m hicverkko.colors.csv              -p rukki.paths.tsv $params
-$VERKKO/lib/verkko/bin/rukki trio -g assembly.hpc.noseq.gfa -m hicverkko.colors.csv --gaf-format -p rukki.paths.gaf $params
+$VERKKO/lib/verkko/bin/rukki trio -g $2/assembly.hpc.noseq.gfa -m $2/hicverkko.colors.csv              -p $2/rukki.paths.tsv $params
+$VERKKO/lib/verkko/bin/rukki trio -g $2/assembly.hpc.noseq.gfa -m $2/hicverkko.colors.csv --gaf-format -p $2/rukki.paths.gaf $params
 
 echo "---final verkko consensus on paths"
 sh $VERKKO/bin/verkko --slurm --paths $2/rukki.paths.gaf --assembly $1 -d $2/consensus/ --hifi $3/hifi/*fastq.gz --nano $3/ont/*fastq.gz
