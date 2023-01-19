@@ -43,14 +43,14 @@ if os.path.exists(compressed_hic):
     hic_file = compressed_hic
 
 noseq_gfa = os.path.join(output_dir, "assembly.hpc.noseq.gfa")
-clustering_output = os.path.join(output_dir, "cluster.out")
+clustering_output = os.path.join(output_dir, "hicverkko.out")
 
 
 #csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.UPDshasta.colors.csv")
 #shutil.copy(csv_output, os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv"))
 
 os.system(f'python3 cluster.py {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
-csv_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv")
+csv_output = os.path.join(output_dir, "hicverkko.colors.csv")
 
 #Parsing clustering output
 #echo -e "node\tmat\tpat\tmat:pat\tcolor" > unitig-popped-unitig-normal-connected-tip.colors.csv
@@ -82,8 +82,8 @@ csv_file.close()
 
 
 #../../devel/rukki/target/release/rukki trio --graph unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.noseq.gfa --markers unitig-popped-unitig-normal-connected-tip.colors.csv -p out.path.tsv
-rukki_output_tsv = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.tsv")
-rukki_output_gaf = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.paths.gaf")
+'''rukki_output_tsv = os.path.join(output_dir, "rukki.paths.tsv")
+rukki_output_gaf = os.path.join(output_dir, "rukki.paths.gaf")
 
 rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output}'
 
@@ -95,7 +95,7 @@ rukki_output_line = f' -p {rukki_output_tsv}'
 os.system(rukki_line + rukki_output_line)
 rukki_output_line = f' --gaf-format -p {rukki_output_gaf}'
 os.system(rukki_line + rukki_output_line)
-
+'''
 trio_file = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.trio.colors.csv")
 print (rukki_output_tsv)
 print(trio_file)
