@@ -79,6 +79,13 @@ def evaluate_rukki(rukkifile, triofile, phased_edges, out_f):
 
 if __name__ == "__main__":                
     if len(sys.argv) < 3:
-        print(f'Usage: {sys.argv[0]} <rukkifile> <triofile>')
+        print(f'Usage: {sys.argv[0]} <rukkifile.tsv> <trio.csv> [binned edges csv]')
         exit()
-    evaluate_rukki(sys.argv[1], sys.argv[2], set(), sys.stdout)
+    if len(sys.argv) == 3:
+        evaluate_rukki(sys.argv[1], sys.argv[2], set(), sys.stdout)
+    else:
+        classified = set()
+        for line in open (sys.argv[3],'r'):
+            classified.add(line.split()[0])
+        evaluate_rukki(sys.argv[1], sys.argv[2], classified, sys.stdout)
+
