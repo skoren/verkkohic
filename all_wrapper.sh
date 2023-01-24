@@ -4,37 +4,47 @@ module load mashmap
 module load snakemake
 #PATH=$PATH:/data/korens/devel/verkko-tip/:/gpfs/gsfs11/users/antipovd2/devel/tmp_pstools/
 #PSTOOLS=/gpfs/gsfs11/users/antipovd2/devel/tmp_pstools/
-#VERKKO =/data/korens/devel/verkko-tip/
-HIC1=`ls $3/*hic*/*R1*fastq.gz`
-HIC2=`ls $3/*hic*/*R2*fastq.gz`
+#VERKKO=/data/korens/devel/verkko-tip/
+HIC1=$3/*hic*/*R1*fastq.gz
+HIC2=$3/*hic*/*R2*fastq.gz
 #verkko_output_folder script_output hic-reads
 echo $VERKKO
 echo $SLURM_JOB_ID
 
-
-#echo $HIC1 
+echo $HIC1 
 #bwa index assembly_graph.fasta
+
+
+echo "---Running consensus on graph edges to get homopolymer uncompressed seqs"
+sh $VERKKO/bin/verkko --slurm --paths $1/6-layoutContigs/consensus_paths.txt --assembly $1 -d $2/consensus_unitigs/ --hifi $3/hifi/*fastq.gz --nano $3/ont/*fastq.gz
 
 echo "---Preprocessing graph files"
 mkdir -p $2
-cat $1/6-layoutContigs/unitig-popped.layout.scfmap | awk '{if (match($1, "path")) print $2"\t"$3}' > $2/contigs_rename.map 
-python3 $VERKKO/lib/verkko/scripts/process_reads.py rename $2/assembly.fasta $2/contigs_rename.map $1/assembly.fasta
-awk '/^S/{print ">"$2"\n"$3}' $1/assembly.homopolymer-compressed.gfa | fold > $2/assembly.hpc.fasta
-cp $1/assembly.homopolymer-compressed.noseq.gfa $2/assembly.hpc.noseq.gfa
+#THIS DOES NOT WORK WITH TRIO RUNS(
+#cat $1/6-layoutContigs/unitig-popped.layout.scfmap | awk '{if (match($1, "path")) print $2"\t"$3}' > $2/contigs_rename.map 
+#python3 $VERKKO/lib/verkko/scripts/process_reads.py rename $2/assembly.fasta $2/contigs_rename.map $1/assembly.fasta
+
+#cp $2/consensus_unitigs/assembly.fasta $2/unitigs.fasta
+
+cat $2/consensus_unitigs/6-layoutContigs/unitig-popped.layout.scfmap | awk '{if (match($1, "path")) print $2"\t"$3}' > $2/contigs_rename.map 
+python3 $VERKKO/lib/verkko/scripts/process_reads.py rename $2/unitigs.fasta  $2/contigs_rename.map $2/consensus_unitigs/assembly.fasta
+
+awk '/^S/{print ">"$2"\n"$3}' $1/assembly.homopolymer-compressed.gfa | fold > $2/unitigs.hpc.fasta
+cp $1/assembly.homopolymer-compressed.noseq.gfa $2/unitigs.hpc.noseq.gfa
 
 
 echo "---Running msahmap"
-#homopolymer compressed assembly for mashmap
-mashmap -r $2/assembly.hpc.fasta -q $2/assembly.hpc.fasta -t 8 -f none --pi 95 -s 10000 -o $2/mashmap.out
-cat $2/mashmap.out |awk '{if ($NF > 99 && $4-$3 > 500000 && $1 != $6) print $1"\t"$6}'|sort |uniq > $2/assembly.matches
+#homopolymer compressed unitigs for mashmap
+mashmap -r $2/unitigs.hpc.fasta -q $2/unitigs.hpc.fasta -t 8 -f none --pi 95 -s 10000 -o $2/mashmap.out
+cat $2/mashmap.out |awk '{if ($NF > 99 && $4-$3 > 500000 && $1 != $6) print $1"\t"$6}'|sort |uniq > $2/unitigs.matches
 
 echo "---Mapping reads with pstools"
 #hicmapping
-echo "Mapping $HIC1 and $HIC2 to $2/assembly.fasta"
+echo "Mapping $HIC1 and $HIC2 to $2/unitigs.fasta"
 echo "pstools will write BIG temporary files to current directory $PWD"
 if [ ! -e $2/map_uncompressed.out ]; then
-   echo "$PSTOOLS/pstools"
-   $PSTOOLS/pstools hic_mapping_unitig -k19 -t60 -o $2/map_uncompressed.out $2/assembly.fasta $HIC1 $HIC2
+   echo "$PSTOOLS/pstools hic_mapping_unitig -k19 -t60 -o $2/map_uncompressed.out $2/unitigs.fasta <(zcat $HIC1) <(zcat $HIC2)"
+   $PSTOOLS/pstools hic_mapping_unitig -k19 -t60 -o $2/map_uncompressed.out $2/unitigs.fasta <(zcat $HIC1) <(zcat $HIC2)
    mv hic_name_connection.output $2/hic_mapping.byread.output
 fi
 
@@ -77,8 +87,8 @@ else
    params="$params --issue-len 2000000 --marker-ratio 3. --issue-ratio 2. --issue-cnt 1000"
 fi
 
-$VERKKO/lib/verkko/bin/rukki trio -g $2/assembly.hpc.noseq.gfa -m $2/hicverkko.colors.csv              -p $2/rukki.paths.tsv $params
-$VERKKO/lib/verkko/bin/rukki trio -g $2/assembly.hpc.noseq.gfa -m $2/hicverkko.colors.csv --gaf-format -p $2/rukki.paths.gaf $params
+$VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.colors.csv              -p $2/rukki.paths.tsv $params
+$VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.colors.csv --gaf-format -p $2/rukki.paths.gaf $params
 
 echo "---final verkko consensus on paths"
-sh $VERKKO/bin/verkko --slurm --paths $2/rukki.paths.gaf --assembly $1 -d $2/consensus/ --hifi $3/hifi/*fastq.gz --nano $3/ont/*fastq.gz
+sh $VERKKO/bin/verkko --slurm --paths $2/rukki.paths.gaf --assembly $1 -d $2/final_consensus/ --hifi $3/hifi/*fastq.gz --nano $3/ont/*fastq.gz
