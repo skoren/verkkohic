@@ -1,17 +1,22 @@
-This contains scripts testing HiC integration in verkko.
+This contains scripts for HiC integration in verkko.
 
-pstools - pre-compiled binary from Shilpa, github repo is here: https://github.com/shilpagarg/pstools but the binary is more recent. To generate mappings run:
-   pstools hic_mapping_unitig -k19 -t60 -o map_uncompressed.out unitig-popped-unitig-normal-connected-tip.fasta data_freeze_hic2_downsampled/HG002.HiC_2_NovaSeq_rep1_run2_S1_L001_R1_001.fastq.gz  data_freeze_hic2_downsampled/HG002.HiC_2_NovaSeq_rep1_run2_S1_L001_R2_001.fastq.gz
-   output is in hic_name_connection.output as well as map_uncompressed.out
+Main script to run is all_wrapper.sh
+It runs hi-c scaffolding pipeline over the preexisting previous verkko (either hifi+ont or hifi+ont+trio) run.
 
-cluster.py - very simple python script (using networkx 2.6) to separate graph into connected components and bipartition
-   needs the gfa, list of homologous node pairs, and the hic mappings by read as input
-   outputs partitions  of nodes, see convert.sh for parsing
+As a prerequirements you'll need to be installed and in $PATH:
+* mashmap
+* python3 with networkx package
 
-To run the pipeline, assuming mappings exist run cluster.sh which will find self-similar nodes w/mashmap, cluster via cluster.py, convert to rukki, and run rukki
+Also, you'll need 
+* pstools (for fast alignment of hi-c reads to the assembly graph)
+released pstools version on github is too old, downloaded binaries here https://pstools.s3.us-east-2.amazonaws.com/pstools_1 
+(recommendation by pstools' author, https://github.com/shilpagarg/DipAsm/issues/16 )
+* verkko assembler (for running consensus on resulting paths and for some auxilary scripts)
+$PSTOOLS and $VERKKO environment variables should be set to the locations of corresponding tools.
 
-The unitig files have homopolymer-compressed and uncompressed versions of the graph.  
-The hic mapping files are from pstools, by read provides read ID and nodes it connects (if any), this is currently used as the input for cluster.py. The bycontig file gives a count of reads connecting nodes, where the nodes are re-named by the index at the start of the file.   
-The trio.colors.csv file provides truth for the graph coloring
+Usage:  ./all_wrapper.sh <previous_verkko_run> <output_folder> <reads_folder>
 
-evaluate_binning.py helps to evaluate hi-c binning using trio binning as ground truth
+For interface simplicity script expects that all input reads are located in <reads_folder>, with hifi/ont/hic subfolders for each data type.
+Reads can be in {fastq/fasta}.gz format; hic paired reads should be in separate files with names like smthR1.fastq.gz and smthR2.fastq.gz
+
+Final assembly will be in <output_folder>/final_consensus/assembly.fasta
