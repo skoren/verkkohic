@@ -1,22 +1,28 @@
 #!/bin/bash
-module load gcc/9.2.0 
-module load mashmap
-module load snakemake
-#PATH=$PATH:/data/korens/devel/verkko-tip/:/gpfs/gsfs11/users/antipovd2/devel/tmp_pstools/
+#module load gcc/9.2.0 
+#module load python/3.8
+#module load mashmap
+#module load snakemake
 #PSTOOLS=/gpfs/gsfs11/users/antipovd2/devel/tmp_pstools/
 #VERKKO=/data/korens/devel/verkko-tip/
+
 HIC1=$3/*hic*/*R1*fastq.gz
 HIC2=$3/*hic*/*R2*fastq.gz
 #verkko_output_folder script_output hic-reads
-echo $VERKKO
-echo $SLURM_JOB_ID
+display_usage() { 
+    echo -e "\nUsage: $0 [previous verkko run] [output folder] [reads folder] \n" 
+    } 
+# if less than two arguments supplied, display usage 
+if [  $# -le 1 ] 
+   then 
+   display_usage
+   exit 1
+fi 
 
-echo $HIC1 
-#bwa index assembly_graph.fasta
 
 
 echo "---Running consensus on graph edges to get homopolymer uncompressed seqs"
-sh $VERKKO/bin/verkko --slurm --paths $1/6-layoutContigs/consensus_paths.txt --assembly $1 -d $2/consensus_unitigs/ --hifi $3/hifi/*fastq.gz --nano $3/ont/*fastq.gz
+sh $VERKKO/bin/verkko --slurm --paths $1/6-layoutContigs/consensus_paths.txt --assembly $1 -d $2/consensus_unitigs/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
 
 echo "---Preprocessing graph files"
 mkdir -p $2
@@ -90,5 +96,5 @@ fi
 $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.colors.csv              -p $2/rukki.paths.tsv $params
 $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.colors.csv --gaf-format -p $2/rukki.paths.gaf $params
 
-echo "---final verkko consensus on paths"
+echo "---Running final verkko consensus on paths"
 sh $VERKKO/bin/verkko --slurm --paths $2/rukki.paths.gaf --assembly $1 -d $2/final_consensus/ --hifi $3/hifi/*fastq.gz --nano $3/ont/*fastq.gz
