@@ -12,6 +12,7 @@ Also, you'll need
 released pstools version on github is too old, downloaded binaries here https://pstools.s3.us-east-2.amazonaws.com/pstools_1 
 (recommendation by pstools' author, https://github.com/shilpagarg/DipAsm/issues/16 )
 * verkko assembler (for running consensus on resulting paths and for some auxilary scripts)
+* 
 $PSTOOLS and $VERKKO environment variables should be set to the locations of corresponding tools.
 
 Usage:  ./all_wrapper.sh <previous_verkko_run> <output_folder> <reads_folder>
