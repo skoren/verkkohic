@@ -8,8 +8,7 @@ As a prerequirements you'll need to be installed and in $PATH:
 * python3 with networkx package
 
 Also, you'll need 
-* pstools (for fast alignment of hi-c reads to the assembly graph)
-released pstools version on github is too old, we downloaded binaries here https://pstools.s3.us-east-2.amazonaws.com/pstools_1 
+* pstools (for fast alignment of hi-c reads to the assembly graph). pstools release on github is too old, so we downloaded binaries here https://pstools.s3.us-east-2.amazonaws.com/pstools_1 
 (recommendation by pstools' author, https://github.com/shilpagarg/DipAsm/issues/16 )
 * verkko assembler (for running consensus on resulting paths and for some auxilary scripts)
  
