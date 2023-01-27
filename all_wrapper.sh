@@ -97,4 +97,4 @@ $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.co
 $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.colors.csv --gaf-format -p $2/rukki.paths.gaf $params
 
 echo "---Running final verkko consensus on paths"
-sh $VERKKO/bin/verkko --slurm --paths $2/rukki.paths.gaf --assembly $1 -d $2/final_consensus/ --hifi $3/hifi/*fastq.gz --nano $3/ont/*fastq.gz
+sh $VERKKO/bin/verkko --slurm --paths $2/rukki.paths.gaf --assembly $1 -d $2/final_consensus/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
