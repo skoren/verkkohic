@@ -49,7 +49,7 @@ clustering_output = os.path.join(output_dir, "hicverkko.out")
 #csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.UPDshasta.colors.csv")
 #shutil.copy(csv_output, os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv"))
 
-os.system(f'python3 cluster.py {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
+os.system(f'python3 {os.path.join(cur_dir, "cluster.py")} {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
 csv_output = os.path.join(output_dir, "hicverkko.colors.csv")
 
 #Parsing clustering output
