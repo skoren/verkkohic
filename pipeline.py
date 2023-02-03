@@ -6,6 +6,7 @@ import random
 from os import listdir
 from os.path import isfile, join
 import evaluate_rukki
+import cluster
 if len(sys.argv) < 3:
     print(f'Usage: {sys.argv[0]} <input_dir> <output_dir>')
     exit()
@@ -47,12 +48,13 @@ clustering_output = os.path.join(output_dir, "cluster.out")
 csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.UPDshasta.colors.csv")
 shutil.copy(csv_output, os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv"))
 
-os.system(f'python3 cluster.py {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
-csv_output = os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv")
+cluster.run_clustering(noseq_gfa, matches_file, hic_file, output_dir)
+#os.system(f'python3 {os.path.join(cur_dir, "cluster.py")} {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
+csv_output = os.path.join(output_dir, "hicverkko.colors.tsv")
 
 #Parsing clustering output
 #echo -e "node\tmat\tpat\tmat:pat\tcolor" > unitig-popped-unitig-normal-connected-tip.colors.csv
-csv_file = open(csv_output, 'w')
+'''csv_file = open(csv_output, 'w')
 csv_file.write("node\tmat\tpat\tmat:pat\tcolor\n")
 
 contig_names = set()
@@ -74,7 +76,7 @@ for line in open (clustering_output, 'r'):
                         csv_file.write(f'{contig}\t100000\t0\t100000:0\t#FF8888\n')
             right = True
 csv_file.close()
-
+'''
 #cat cluster.out |grep -A 1 Seed|grep -v Initial | grep -v Seed |awk -F "}," '{alen=split($1, a, ","); blen=split($2, b, ","); for (i = 1; i<=alen; i++) { print a[i]"\t0\t100000\t0:100000\t#8888FF"} for (i = 1; i<= blen; i++) {print b[i]"\t100000\t0\t100000:0\t#FF8888"} }'|sed 's/({//g' |sed 's/})//g' |sed s/\'//g|sed s/\ //g |sed 's/{//g' | sort |uniq |grep -w -v -f unassigned >> unitig-popped-unitig-normal-connected-tip.colors.csv
 #hi-c gfa(noseq) trio_colors
 

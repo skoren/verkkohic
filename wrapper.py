@@ -6,7 +6,7 @@ import random
 from os import listdir
 from os.path import isfile, join
 out_prefix = "/data/antipovd2/data/"
-out_prefix = "/Users/antipovd2/work/verkkohic/res/"
+out_prefix = "/Users/antipovd2/work/res/"
 report_name = "misassemblies.res"
 if len(sys.argv) < 3:
     print(f'Usage: {sys.argv[0]} <input_file> <eval_name>')
