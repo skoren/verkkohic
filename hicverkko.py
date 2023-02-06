@@ -31,7 +31,7 @@ if __name__ == "__main__":
     #TODO
     #mashmap -r unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.fasta -q unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.fasta -t 8 -f none --pi 95 -s 10000
     #cat mashmap.out |awk '{if ($NF > 99 && $4-$3 > 500000 && $1 != $6) print $1"\t"$6}'|sort |uniq > unitig-popped-unitig-normal-connected-tip.homopolymer-compressed.matches
-    matches_file = os.path.join(output_dir, "assembly.matches")
+    matches_file = os.path.join(output_dir, "unitigs.matches")
     hic_file = os.path.join(output_dir, "hic_mapping.byread.output")
     if not os.path.exists(hic_file):
         hic_file = os.path.join(output_dir, "hic.byread.compressed")
@@ -39,7 +39,6 @@ if __name__ == "__main__":
     if os.path.exists(compressed_hic):
         hic_file = compressed_hic
 
-    noseq_gfa = os.path.join(output_dir, "assembly.hpc.noseq.gfa")
-    clustering_output = os.path.join(output_dir, "hicverkko.out")
+    noseq_gfa = os.path.join(output_dir, "unitigs.hpc.noseq.gfa")
 
     cluster.run_clustering(noseq_gfa, matches_file, hic_file, output_dir)
