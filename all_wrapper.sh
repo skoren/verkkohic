@@ -22,7 +22,7 @@ fi
 
 
 echo "---Running consensus on graph edges to get homopolymer uncompressed seqs"
-sh $VERKKO/bin/verkko --slurm --paths $1/6-layoutContigs/consensus_paths.txt --assembly $1 -d $2/consensus_unitigs/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
+sh $VERKKO/bin/verkko  --paths $1/6-layoutContigs/consensus_paths.txt --assembly $1 -d $2/consensus_unitigs/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
 
 echo "---Preprocessing graph files"
 mkdir -p $2
@@ -97,4 +97,4 @@ $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.co
 $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.colors.tsv --gaf-format -p $2/rukki.paths.gaf $params
 
 echo "---Running final verkko consensus on paths"
-sh $VERKKO/bin/verkko --slurm --paths $2/rukki.paths.gaf --assembly $1 -d $2/final_consensus/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
+sh $VERKKO/bin/verkko  --paths $2/rukki.paths.gaf --assembly $1 -d $2/final_consensus/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
