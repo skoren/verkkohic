@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+MAX_SHORT_COMPONENT = 100
 import sys
 import os
 import random
@@ -31,6 +32,15 @@ def evaluate_set(contig_set, lengths, colors):
         if m_len > 0 and p_len > 0:
             print('BAD')
             print(contig_set)
+            if m_len < p_len:
+                bad_color = 'm'
+            else:
+                bad_color = 'p'
+            bad_s = ""
+            for contig in contig_set:
+                if colors[contig] == bad_color:
+                    bad_s += contig + ", "
+            print (bad_s) 
             if m_len < p_len:
                 return m_len, m_count
             else:
@@ -78,7 +88,7 @@ def evaluate_dataset(hic_file, gfa_file, trio_file, chromosomal_file):
             chrs['ALL'].add(name)
     G = nx.Graph()
     graph_functions.load_indirect_graph(gfa_file, G)
-    graph_functions.remove_large_tangles(G, 200000, 100)
+    graph_functions.remove_large_tangles(G, 200000, MAX_SHORT_COMPONENT)
     wrong_len = 0
     wrong_int = 0
     for c in sorted(nx.connected_components(G), key=len, reverse=True):
@@ -90,9 +100,10 @@ def evaluate_dataset(hic_file, gfa_file, trio_file, chromosomal_file):
             if e in hic_colors:
                 if hic_colors[e] == 'p':
                     pset.add(e)
-                else:
+                    count += 1
+                elif hic_colors[e] == 'm':
                     mset.add(e)
-                count += 1
+                    count += 1
         if len(mset) + len (pset) > 1:
 #            print(f"Evaluating component of {len(mset)} and {len(pset)} edges of 1/2 haplotypes")
             w_len, w_int = evaluate_set(mset, lengths, trio_colors)

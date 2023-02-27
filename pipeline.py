@@ -52,6 +52,9 @@ cluster.run_clustering(noseq_gfa, matches_file, hic_file, output_dir)
 #os.system(f'python3 {os.path.join(cur_dir, "cluster.py")} {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
 csv_output = os.path.join(output_dir, "hicverkko.colors.tsv")
 
+#BandageNG accepts tsv but only with tsv extension!
+csv_copy = os.path.join(output_dir, "hicverkko.colors.csv")
+shutil.copy(csv_output, csv_copy)
 #Parsing clustering output
 #echo -e "node\tmat\tpat\tmat:pat\tcolor" > unitig-popped-unitig-normal-connected-tip.colors.csv
 '''csv_file = open(csv_output, 'w')
@@ -90,7 +93,7 @@ rukki_line = f'rukki trio --graph {noseq_gfa} --markers {csv_output}'
 rukki_line += " --issue-len 200000  --marker-ratio 5. --issue-ratio 3. --issue-cnt 100 "
 #what about rukki options?
 rukki_line += f'--init-assign {os.path.join(output_dir, "out_init_ann.csv")} --refined-assign {os.path.join(output_dir, "out_refined_ann.csv")} --final-assign {os.path.join(output_dir, "out_final_ann.csv")}'
-rukki_line += " --marker-sparsity 5000 --issue-sparsity 1000 --try-fill-bubbles"
+rukki_line += " --marker-sparsity 5000 --issue-sparsity 1000 "
 rukki_output_line = f' -p {rukki_output_tsv}'
 os.system(rukki_line + rukki_output_line)
 rukki_output_line = f' --gaf-format -p {rukki_output_gaf}'

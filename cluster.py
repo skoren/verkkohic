@@ -35,6 +35,77 @@ def IsTip(node, edges):
     return False
 
 
+#collapse a node, add links from
+def collapseOrientedNode (edges, node):
+    for pref in ['>', '<']:
+        ornode = pref + node
+        if not ornode in edges:
+            continue
+        if not revnode(ornode) in edges:
+            continue
+        outgoing = set(edges[ornode])
+        incoming = set()
+        for n in edges[revnode(ornode)]:
+            incoming.add(revnode(n))
+        for inc in incoming:
+            for outg in outgoing:
+                edges[inc].add(outg)
+    for pref in ['>', '<']:
+        ornode = pref + node
+        if not revnode(ornode) in edges:
+            continue
+        incoming = set()
+        for n in edges[revnode(ornode)]:
+            incoming.add(revnode(n))
+        for inc in incoming:
+            edges[inc].discard(ornode)
+    for pref in ['>', '<']:
+        ornode = pref + node
+        if ornode in edges:
+            edges.pop(ornode)
+
+def fixUnbalanced(part, C, G):
+    auxs = [0, 0]
+    lens = [0, 0]
+    for ind in range (0, 2):
+        for node in part[ind]:
+            if node.startswith('Aux'):
+                auxs[ind] += 1
+            elif node in G.nodes:
+                lens[ind] += G.nodes[node]['length']
+            else:
+                print(f"Someting went wrong with node {node}")
+    print (f"In fix unbalanced {lens[0]} {lens[1]}")
+    #just _a_ limitation on the swap length is required
+    maxswap = min(lens[0]/10, lens[1]/10)
+    curswap = 0
+    edge_swapped =0
+    for ind in range(0, 2):
+        #do not move edges _to_ the part where aux edge is present -otherwise it could be swapped with aux
+        if auxs[1 - ind] == 0:
+            print(f'processing components {part[0]} {part[1]}')
+            changed = True
+            while changed:
+                changed = False
+                for node in part[ind]:
+                    if node in G:
+                        cost = 0
+                        for i in part[ind]:
+                            if [i, node] in C.edges:
+                                cost += C.edges[i, node]['weight']
+                        for j in part[1 - ind]:
+                            if [j, node] in C.edges:
+                                cost -= C.edges[j, node]['weight']
+                        if cost < 0 and curswap + G.nodes[node]['length'] < maxswap:
+                            changed = True
+                            curswap += G.nodes[node]['length']
+                            part[1 - ind].append(node)
+                            part[ind].remove(node)
+                            edge_swapped +=1
+                            print (f"SWAPPED {node}")
+                            break
+    if curswap > 0:
+        print (f"Fixing uneven component, moved {curswap} bases and {edge_swapped} nodes")
 
 def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
     #TODO: move constants to some more relevant place
@@ -45,7 +116,7 @@ def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
     KLIN_STARTS = 1000  # number of different starts of kernighan lin
     KLIN_ITER = 10000  # number of iterations inside kernighan lin
 
-    MAX_SHORT_COMPONENT = 50 # we remove from consideration each connected compoents of edges < MIN_LEN that is larger than
+    MAX_SHORT_COMPONENT = 100 # we remove from consideration each connected compoents of edges < MIN_LEN that is larger than
     MIN_WEIGHT = 10 # Ignore edges with few links
     SIGNIFICANT_MAJORITY = 2.5
 
@@ -113,6 +184,11 @@ def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
             edges[fromnode].add(tonode)
             edges[revnode(tonode)].add(revnode(fromnode))
 
+#let's find that nodes that have multiple extension
+    multiple_ext = set()
+    for node in edges:
+        if len(node) > 1:
+            multiple_ext.add(node)
     #dirty calculation median coverage, considering that most of the phasing is done
     all_lengths = {}
     total_length = 0
@@ -228,13 +304,28 @@ def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
                 sys.exit()
     #        if not (n in matchGraph):
 
-            if G.nodes[n]['length'] < MIN_LEN:
+            if G.nodes[n]['coverage'] > MAX_COV:
+                logging_f.write("While partitoning dropping node %s coverage too high\n" % (n))
+                short.append(n)
+            elif G.nodes[n]['length'] < MIN_LEN:
     #            sys.stderr.write("While partitoning dropping node %s its too short\n" % (n))
+#let's not delete but collapse all short nodes. to "extend" homology information.
+                '''neighbours = set()
+                for edge in G.edges(n):
+                    if edge[0] != n:
+                        neighbours.add(edge[0])
+                    if edge[1] != n:
+                        neighbours.add(edge[1])
+#Do we need a separate subgraph for these manipulations?
+                for n1 in neighbours:
+                    for n2 in neighbours:
+                        if n1 != n2:
+                            G.add_edge(n1, n2)
+#                C.remove_nodes_from(n)
+                G.remove_nodes_from(n) '''
+                collapseOrientedNode(edges, n)
                 short.append(n)
 
-            elif G.nodes[n]['coverage'] > MAX_COV:
-                sys.stderr.write("While partitoning dropping node %s coverage too high\n" % (n))
-                short.append(n)
             else:
                 good = False
                 for e in hicGraph.edges(n):
@@ -243,10 +334,11 @@ def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
                             and (e[0] in C and e[1] in C):
                         good = True
                 if not good:
-                    sys.stderr.write("While partitoning dropping node %s low links count\n" % (n))
+                    logging_f.write("While partitoning dropping node %s low links count\n" % (n))
                     short.append(n)
 
         C.remove_nodes_from(short)
+        logging_f.write(f'Currently {C.number_of_nodes()} nodes\n')
         # Adding some auxilary vertices to allow slightly unbalanced partitions
         # sqrt/2 is quite arbitrary and subject to change
         aux_nodes = int(math.sqrt(C.number_of_nodes() // 2))
@@ -274,16 +366,41 @@ def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
 
         # neighboring edges are encouraged to belong to the same component
         #Currently not in use
-        for e in G.edges(current_component):
+        for e in C.nodes:
+            for pref in ['>', '<']:
+
+                ornode = pref + e
+                if not (ornode in edges.keys()):
+                    continue
+                for neighbour in edges[ornode]:
+                    suff = neighbour[1:]
+                    if suff in C and matchGraph.get_edge_data(e, suff) == None:
+#dirty hack to kill erroneous z-connections issues
+                        connection_bonus = FIXED_WEIGHT // 2
+                        if len (matchGraph.edges(e)) > 0 and len (matchGraph.edges(suff)) > 0:
+                            connection_bonus = 0
+#connections with more than one extension are ambiguous and do not deserve bonus
+                        if ornode in multiple_ext or revnode(suff) in multiple_ext:
+                            connection_bonus = 0
+
+                        w = hicGraph.get_edge_data(e, suff, 0)
+                        add_w = 0
+                        if w != 0:
+                            add_w = w['weight']
+                        C.add_edge(e, suff, weight= connection_bonus + add_w)
+        #            C.add_edge(e[0], e[1], weight=0 + add_w)
+        #            aux_nodes = aux_nodes
+        '''for e in G.edges(current_component):
             if e[0] in C and e[1] in C and matchGraph.get_edge_data(e[0], e[1]) == None:
                 w = hicGraph.get_edge_data(e[0], e[1], 0)
                 add_w = 0
                 if w != 0:
                     add_w = w['weight']
-    #            C.add_edge(e[0], e[1], weight=FIXED_WEIGHT + add_w)
-                C.add_edge(e[0], e[1], weight=0 + add_w)
+                C.add_edge(e[0], e[1], weight=FIXED_WEIGHT + add_w)
+    #            C.add_edge(e[0], e[1], weight=0 + add_w)
     #            aux_nodes = aux_nodes
-
+'''
+        logging_f.write(f'Currently {C.number_of_nodes()} in current component\n')
 
         if C.number_of_nodes() > 1:
     #TODO: why not just iterate on matchGraph.edges()?
@@ -356,6 +473,8 @@ def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
                             best_score = sum_w
                 # for ()
                 # cut_value, part = nx.stoer_wagner(C)
+            #try to move relatively short edges to fix case of unbalanced haplo sizes (complex repeats on only one haplo)
+            fixUnbalanced(best_part, C, G)
             logging_f.write(f'RES\t{best_part}\n')
 
             add_part = [set(), set()]
