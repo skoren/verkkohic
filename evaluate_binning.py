@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 MAX_SHORT_COMPONENT = 100
 import sys
