@@ -16,6 +16,7 @@ Also, you'll need
 $PSTOOLS and $VERKKO environment variables should be set to the locations of corresponding tools.
 
 Usage:  ./all_wrapper.sh <previous_verkko_run> <output_folder> <reads_folder>
+
 As alternative, with precomputed alignment you can run ./norealign_wrapper.sh <previous_verkko_run> <output_folder> <reads_folder> <aligned_sorted_bam>
 
 For interface simplicity script expects that all input reads are located in <reads_folder>, with hifi/ont/hic subfolders for each data type.
