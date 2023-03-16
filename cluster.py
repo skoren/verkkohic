@@ -75,7 +75,7 @@ def fixUnbalanced(part, C, G):
                 lens[ind] += G.nodes[node]['length']
             else:
                 print(f"Someting went wrong with node {node}")
-    print (f"In fix unbalanced {lens[0]} {lens[1]}")
+#    print (f"In fix unbalanced {lens[0]} {lens[1]}")
     #just _a_ limitation on the swap length is required
     maxswap = min(lens[0]/10, lens[1]/10)
     curswap = 0
@@ -83,7 +83,7 @@ def fixUnbalanced(part, C, G):
     for ind in range(0, 2):
         #do not move edges _to_ the part where aux edge is present -otherwise it could be swapped with aux
         if auxs[1 - ind] == 0:
-            print(f'processing components {part[0]} {part[1]}')
+#            print(f'processing components {part[0]} {part[1]}')
             changed = True
             while changed:
                 changed = False
@@ -277,7 +277,7 @@ def run_clustering (graph_gfa, homologous_nodes, hic_byread, output_dir):
     sys.stderr.write("Loaded hic info with %d nodes and %d edges\n" % (hicGraph.number_of_nodes(), hicGraph.number_of_edges()))
     # for node1, node2 in hicGraph.edges():
     #    sys.stderr.write("Edge from %s to %s of weight %s\n"%(node1, node2, hicGraph.get_edge_data(node1, node2)))
-    translate.close()
+    compressed_file.close()
 
     dists = dict(nx.all_pairs_dijkstra_path_length(G, weight=lambda u, v, d: G.nodes[v]['length']))
     sys.stderr.write("Distances counted\n")

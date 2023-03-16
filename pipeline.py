@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import shutil
 import sys
 import os
@@ -45,8 +45,8 @@ noseq_gfa = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.h
 clustering_output = os.path.join(output_dir, "cluster.out")
 
 
-csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.UPDshasta.colors.csv")
-shutil.copy(csv_output, os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv"))
+#csv_output = os.path.join(input_dir, "unitig-popped-unitig-normal-connected-tip.UPDshasta.colors.csv")
+#shutil.copy(csv_output, os.path.join(output_dir, "unitig-popped-unitig-normal-connected-tip.colors.csv"))
 
 cluster.run_clustering(noseq_gfa, matches_file, hic_file, output_dir)
 #os.system(f'python3 {os.path.join(cur_dir, "cluster.py")} {noseq_gfa} {matches_file} {hic_file} {output_dir}> {clustering_output}')
