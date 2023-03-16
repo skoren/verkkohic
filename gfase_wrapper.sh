@@ -10,6 +10,13 @@ if [  $# -le 1 ]
    exit 1
 fi
 
+s=`ps $$|grep -c bash`
+if [ $s -le 0 ]; then
+   echo "Error: please run this script under bash interpreter not sh or others"
+   display_usage
+   exit 1
+fi
+
 cores=$SLURM_CPUS_PER_TASK
 slurm="--slurm"
 if [ "x$cores" == "x" ]; then
@@ -27,47 +34,49 @@ if [[ "$#" -ge 4 ]]; then
    ln -s $in_mapping $2/hic_to_assembly.sorted_by_read.bam
 fi
 
-echo "Generating uncompressed gfa..."
-# create the appropriate input for mapping
-## create renaming map...
-cat $1/6-*/*scfmap \
-    | grep utig4 \
-    | awk '{print $2"\t"$NF}' \
-    > $2/rename.map
+if [ ! -s $2/assembly.gfa ]; then
+   echo "Generating uncompressed gfa..."
 
-## rename fasta from ">unassigned-0000001" to names like ">utig4-0" (etc)
-python $VERKKO/lib/verkko/scripts/fasta_combine.py rename $2/assembly_renamed.fasta $2/rename.map $1/assembly.fasta
+   cp $1/assembly.homopolymer-compressed.noseq.gfa $2/
 
-## align to get homopolymer uncompressed GFA?
-$VERKKO/lib/verkko/bin/alignGFA \
-    -V -e 0.30 \
-    -gfa \
-    -i $1/assembly.homopolymer-compressed.gfa \
-    -T $2/assembly_renamed.fasta 0 \
-    -t $cores \
-    -o $2/assembly.gfa
+   # create the appropriate input for mapping
+   ## create renaming map...
+   cat $1/6-*/*scfmap \
+       | grep utig4 \
+       | awk '{print $2"\t"$NF}' \
+       > $2/rename.map
 
-echo "Aligning reads..."
+   ## rename fasta from ">unassigned-0000001" to names like ">utig4-0" (etc)
+   python $VERKKO/lib/verkko/scripts/fasta_combine.py rename $2/assembly.fasta $2/rename.map $1/assembly.fasta
+
+   ## align to get homopolymer uncompressed GFA?
+   $VERKKO/lib/verkko/bin/alignGFA \
+       -V -e 0.30 \
+       -gfa \
+       -i $1/assembly.homopolymer-compressed.gfa \
+       -T $2/assembly.fasta 0 \
+       -t $cores \
+       -o $2/assembly.gfa
+fi
+
+echo "Aligning reads from $3..."
 if [ -e $3/hic ]; then
    HIC1=`ls $3/hic/*R1_001.fast[aq].gz|tr '\n' ' ' |awk '{print substr($0, 1, length($0)-1)}'`
    HIC2=`ls $3/hic/*R2_001.fast[aq].gz|tr '\n' ' ' |awk '{print substr($0, 1, length($0)-1)}'`
-   echo $HIC1
-   echo $HIC2
+   echo "Hic pairs 1: '$HIC1'"
+   echo "Hic pairs 2: '$HIC2'"
 
-   module load bwa
-   
-   if [ ! -e $2/hic_to_assembly.sorted_by_read.bam ]; then
+   if [ ! -s $2/hic_to_assembly.sorted_by_read.bam ]; then
       echo "Mapping Illumina HiC w/BWA"
-      bwa index assembly.fasta && bwa mem -t $cores -5 -S -P assembly.fasta <(zcat $HIC1) <(zcat $HIC2) | samtools view -h -q 1 - | samtools sort -n -@ $cores - -o $1/hic_to_assembly.sorted_by_read.bam
+      bwa index $2/assembly.fasta && bwa mem -t $cores -5 -S -P $2/assembly.fasta <(zcat $HIC1) <(zcat $HIC2) | samtools view -bh -@ $cores -q 1 - | samtools sort -n -@ $cores - -o $2/hic_to_assembly.sorted_by_read.bam
    fi
 elif [ -e $3/porec ]; then
-   POREC=`ls $1/porec/*.fast[aq].gz |tr '\n' ' ' |awk '{print substr($0, 1, length($0)-1)}'`
-   echo $POREC
+   POREC=`ls $3/porec/*.fast[aq].gz |tr '\n' ' ' |awk '{print substr($0, 1, length($0)-1)}'`
+   echo "Porec file: $POREC"
 
-   module load minimap2
-   if [ ! -e hic_to_assembly.sorted_by_read.bam ]; then
+   if [ ! -s $2/hic_to_assembly.sorted_by_read.bam ]; then
       echo "Mapping PoreC w/Minimap"
-      minimap2 -a -x map-ont -k 17 -t $cores -K 10g -I 8g assembly.fasta <(zcat $POREC) | samtools view -bh -@ $cores -q 1 - > $1/hic_to_assembly.sorted_by_read.bam
+      minimap2 -a -x map-ont -k 17 -t $cores -K 10g -I 8g $2/assembly.fasta <(zcat $POREC) | samtools view -bh -@ $cores -q 1 - > $2/hic_to_assembly.sorted_by_read.bam
    fi
 else
    echo "Error no reads found, expected hic or porec folder"
@@ -75,6 +84,8 @@ else
 fi
 
 echo "GFASing..."
+rm -rf $2/6-gfase_output
+
 $GFASE/phase_contacts_with_monte_carlo \
 -i $2/hic_to_assembly.sorted_by_read.bam \
 -g $2/assembly.gfa \
@@ -111,7 +122,7 @@ else
    params="$params --marker-ratio 3."
 fi
 
-$VERKKO/lib/verkko/bin/rukki trio -g $1/assembly.homopolymer-compressed.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv              -p $2/6-gfase_rukki/rukki.paths.tsv $params
-$VERKKO/lib/verkko/bin/rukki trio -g $1/assembly.homopolymer-compressed.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv --gaf-format -p $2/6-gfase_rukki/rukki.paths.gaf $params
+$VERKKO/lib/verkko/bin/rukki trio -g $1/assembly.homopolymer-compressed.noseq.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv              -p $2/6-gfase_rukki/rukki.paths.tsv $params
+$VERKKO/lib/verkko/bin/rukki trio -g $1/assembly.homopolymer-compressed.noseq.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv --gaf-format -p $2/6-gfase_rukki/rukki.paths.gaf $params
 
 sh $VERKKO/bin/verkko $slurm --screen human --paths $2/6-gfase_rukki/rukki.paths.gaf --assembly $1 -d $2/7-final_consensus/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
