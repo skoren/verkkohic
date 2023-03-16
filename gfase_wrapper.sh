@@ -10,8 +10,6 @@ if [  $# -le 1 ]
    exit 1
 fi
 
-set -e -o pipefail
-
 cores=$SLURM_CPUS_PER_TASK
 slurm="--slurm"
 if [ "x$cores" == "x" ]; then
