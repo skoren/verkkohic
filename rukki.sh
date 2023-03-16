@@ -4,6 +4,8 @@ set -e
 #
 #  Run Rukki.  Once for Bandage input, once for Consensus.
 #
+echo "ERROR DO NOT USE ME"
+exit
 
 params=""
 params="$params --init-assign out_init_ann.csv"

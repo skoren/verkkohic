@@ -79,6 +79,7 @@ python3 $SCRIPT_DIR/hicverkko.py $1 $2
 
 
 echo "---Running rukki on the resulting clustering"
+echo "---Running rukki on the resulting clustering"
 params=""
 params="$params --init-assign $2/out_init_ann.csv"
 params="$params --refined-assign $2/out_refined_ann.csv"
@@ -86,11 +87,18 @@ params="$params --final-assign $2/out_final_ann.csv"
 params="$params --marker-sparsity 5000"
 params="$params --issue-sparsity 1000"
 params="$params --try-fill-bubbles"
+params="$params --fillable-bubble-diff 1000"
+params="$params --fillable-bubble-len 500000"
+params="$params --assign-tangles --tangle-allow-deadend"
+params="$params --issue-ratio 1."
+params="$params --solid-homozygous-cov-coeff 1.1"
+params="$params --solid-ratio 1.5"
+params="$params --hap-names haplotype1,haplotype2"
 
 if [ xtrio = xtrio ]; then
-   params="$params --issue-len 200000  --marker-ratio 5. --issue-ratio 3. --issue-cnt 100"
+   params="$params --marker-ratio 5."
 else
-   params="$params --issue-len 2000000 --marker-ratio 3. --issue-ratio 2. --issue-cnt 1000"
+   params="$params --marker-ratio 3."
 fi
 
 $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.hpc.noseq.gfa -m $2/hicverkko.colors.tsv              -p $2/rukki.paths.tsv $params
