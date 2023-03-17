@@ -102,7 +102,7 @@ cat $2/6-gfase_output/phases.csv |awk -F "," '{if ($2 == -1) { print $1"\t0\t100
 
 echo "---Running rukki on the resulting clustering"
 params=""
-params="$params --init-assign $2/6-gfaserukki/out_init_ann.csv"
+params="$params --init-assign $2/6-gfase_rukki/out_init_ann.csv"
 params="$params --refined-assign $2/6-gfase_rukki/out_refined_ann.csv"
 params="$params --final-assign $2/6-gfase_rukki/out_final_ann.csv"
 params="$params --marker-sparsity 5000"
@@ -122,7 +122,7 @@ else
    params="$params --marker-ratio 3."
 fi
 
-$VERKKO/lib/verkko/bin/rukki trio -g $1/assembly.homopolymer-compressed.noseq.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv              -p $2/6-gfase_rukki/rukki.paths.tsv $params
-$VERKKO/lib/verkko/bin/rukki trio -g $1/assembly.homopolymer-compressed.noseq.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv --gaf-format -p $2/6-gfase_rukki/rukki.paths.gaf $params
+$VERKKO/lib/verkko/bin/rukki trio -g $2/assembly.homopolymer-compressed.noseq.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv              -p $2/6-gfase_rukki/rukki.paths.tsv $params
+$VERKKO/lib/verkko/bin/rukki trio -g $2/assembly.homopolymer-compressed.noseq.gfa -m $2/6-gfase_rukki/unitig-popped-unitig-normal-connected-tip.colors.csv --gaf-format -p $2/6-gfase_rukki/rukki.paths.gaf $params
 
 sh $VERKKO/bin/verkko $slurm --screen human --paths $2/6-gfase_rukki/rukki.paths.gaf --assembly $1 -d $2/7-final_consensus/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
