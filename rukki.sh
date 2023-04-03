@@ -41,25 +41,25 @@ if [ ! -e $2/7-final_consensus/assembly.haplotype1.fasta && -e $2/7-final_consen
    touch $2/7-final_consensus/7-consensus/paths-unassigned
 
    awk < $2/7-final_consensus/6-layoutContigs/unitig-popped.layout.scfmap \
-     'BEGIN {
+     -v d=$2 'BEGIN {
         FS="[ \t]+"; OFS="\t";
       }
-      ($1 = "path") && ($2 ~ /^haplotype1-[0-9]+$/)    { print $2 > "./paths-haplotype1"; }
-      ($1 = "path") && ($2 ~ /^haplotype2-[0-9]+$/)    { print $2 > "./paths-haplotype2"; }
-      ($1 = "path") && ($2 ~ /^unassigned-[0-9]+$/) { print $2 > "./paths-unassigned"; }'
+      ($1 = "path") && ($2 ~ /^haplotype1-[0-9]+$/)    { print $2 > d"/7-final_consensus/paths-haplotype1"; }
+      ($1 = "path") && ($2 ~ /^haplotype2-[0-9]+$/)    { print $2 > d"/7-final_consensus/paths-haplotype2"; }
+      ($1 = "path") && ($2 ~ /^unassigned-[0-9]+$/)    { print $2 > d"/7-final_consensus/paths-unassigned"; }'
 
    echo "--------------------"
    echo "Extracting haplotypes."
    echo ""
 
    if [ -e $2/7-final_consensus/paths-haplotype1 ] ; then
-      $VERKKO/lib/verkko/scripts/fasta_extract.py extract $2/7-final_consensus/assembly.haplotype1.fasta $2/7-final_consensus/7-consensus/paths-haplotype1 $2/7-final_consensus/assembly.fasta
+      $VERKKO/lib/verkko/scripts/fasta_extract.py extract $2/7-final_consensus/assembly.haplotype1.fasta $2/7-final_consensus/paths-haplotype1 $2/7-final_consensus/assembly.fasta
    fi
    if [ -e $2/7-final_consensus/paths-haplotype2 ] ; then
-      $VERKKO/lib/verkko/scripts/fasta_extract.py extract $2/7-final_consensus/assembly.haplotype2.fasta $2/7-final_consensus/7-consensus/paths-haplotype2 $2/7-final_consensus/assembly.fasta
+      $VERKKO/lib/verkko/scripts/fasta_extract.py extract $2/7-final_consensus/assembly.haplotype2.fasta $2/7-final_consensus/paths-haplotype2 $2/7-final_consensus/assembly.fasta
    fi
    if [ -e $2/7-final_consensus/paths-unassigned ] ; then
-      $VERKKO/lib/verkko/scripts/fasta_extract.py extract $2/7-final_consensus/assembly.unassigned.fasta $2/7-final_consensus/7-consensus/paths-unassigned $2/7-final_consensus/assembly.fasta
+      $VERKKO/lib/verkko/scripts/fasta_extract.py extract $2/7-final_consensus/assembly.unassigned.fasta $2/7-final_consensus/paths-unassigned $2/7-final_consensus/assembly.fasta
    fi
 fi
 
