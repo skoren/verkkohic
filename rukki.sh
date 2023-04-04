@@ -31,7 +31,7 @@ $VERKKO/lib/verkko/bin/rukki trio -g $2/unitigs.homopolymer-compressed.noseq.gfa
 
 sh $VERKKO/bin/verkko $4 --screen human --paths $2/6-gfase_rukki/rukki.paths.gaf --assembly $1 -d $2/7-final_consensus/ --hifi $3/hifi/*fast*.gz --nano $3/ont/*fast*.gz
 
-if [ ! -e $2/7-final_consensus/assembly.haplotype1.fasta && -e $2/7-final_consensus/assembly.fasta ]; then
+if [ ! -e $2/7-final_consensus/assembly.haplotype1.fasta ] && [ -e $2/7-final_consensus/assembly.fasta ]; then
    echo "--------------------"
    echo "Finding haplotypes for label1='haplotype1' and label2='haplotype2'."
    echo ""
